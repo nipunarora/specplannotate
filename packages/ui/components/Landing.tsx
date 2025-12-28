@@ -1,5 +1,6 @@
 import React from 'react';
 import logoImage from '../plannotator.webp';
+import { ModeToggle } from './ModeToggle';
 
 interface LandingProps {
   onEnter: () => void;
@@ -18,14 +19,17 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
           </div>
           <span className="text-sm font-semibold tracking-tight">Plannotator</span>
         </div>
-        <a
-          href="https://github.com/anthropics/claude-code"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Claude Code Docs
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href="https://github.com/anthropics/claude-code"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Claude Code Docs
+          </a>
+          <ModeToggle />
+        </div>
       </nav>
 
       {/* Content wrapper with vertical borders */}
@@ -46,12 +50,12 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
               <img
                 src={logoImage}
                 alt="Plannotator logo"
-                className="w-20 h-20 md:w-24 md:h-24 object-contain shrink-0"
+                className="w-20 h-20 md:w-24 md:h-24 object-contain shrink-0 -scale-x-100"
               />
             </div>
 
             <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-              A visual interface for reviewing Claude Code plans. Select text, add feedback, export structured annotations that Claude understands.
+              Interactive Plan Review: Mark up and refine your plans using a UI, easily share for team collaboration, automatically integrates with agent plan mode.
             </p>
 
             <button
@@ -72,31 +76,46 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">The Problem</h3>
               <p className="text-foreground/90">
-                Claude Code shows plans in the terminal. You read them, approve or deny, but giving specific feedback means typing everything out. Hard to reference exact sections.
+                Claude Code shows plans in the terminal. You read them, approve or deny, but giving specific feedback means typing everything out. Hard to reference exact sections. Zero team collaboration features.
               </p>
             </div>
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">The Solution</h3>
               <p className="text-foreground/90">
-                Select the exact text you want to change. Mark it for deletion, add a comment, or suggest a replacement. Export as structured feedback Claude can act on.
+                Select the exact parts of the plan you want to change. Mark it for deletion, add a comment, or suggest a replacement. Share plans and collect team member feedback. Automatically send feedback for Claude Code to act on.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Privacy */}
+        {/* Privacy & Sharing */}
         <section className="py-16 px-8 border-t border-border/30">
-          <div className="flex items-start gap-4 max-w-2xl">
-            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+          <div className="grid md:grid-cols-2 gap-8 max-w-2xl">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Runs locally.</h3>
+                <p className="text-muted-foreground text-sm">
+                  Local plugin. No network requests. Plannotator runs entirely in your browser. Plans never leave your machine.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-1">Runs locally. Your data stays private.</h3>
-              <p className="text-muted-foreground text-sm">
-                No server. No network requests. Plannotator is a lightweight, local HTML page that runs in your browser. Plans never leave your machine.
-              </p>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Share privately.</h3>
+                <p className="text-muted-foreground text-sm">
+                  Collaborate without a backend. Plans and annotations compress into the URL itself — share a link, not your data. No accounts, no database, no third parties. Inspired by <a href="https://github.com/antonmedv/textarea" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">textarea.my</a>.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -220,8 +239,8 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
               Select text → choose action (delete, comment) → annotations appear in the sidebar
             </Step>
 
-            <Step num={3} title="Export feedback">
-              Structured markdown that Claude Code understands. Paste it back, Claude revises the plan.
+            <Step num={3} title="Approve or request changes">
+              Click approve to proceed, or deny with annotations. Feedback flows back to Claude automatically via hooks.
             </Step>
           </div>
         </section>
@@ -232,28 +251,25 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
           <ul className="space-y-2 text-sm text-muted-foreground max-w-2xl">
             <li className="flex items-center gap-2">
               <span className="text-primary">•</span>
-              Single HTML file build — easy to distribute
+              Single HTML file build — runs from Bun server on random port
             </li>
             <li className="flex items-center gap-2">
               <span className="text-primary">•</span>
-              Uses Claude Code hooks (PreToolUse/PostToolUse)
+              Claude Code plugin with PermissionRequest hook on ExitPlanMode
             </li>
             <li className="flex items-center gap-2">
               <span className="text-primary">•</span>
-              Plan content injected at runtime via shell script
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-primary">•</span>
-              React + Tailwind + Vite — hackable
+              URL sharing via deflate compression — no backend required
             </li>
           </ul>
         </section>
 
         {/* Footer */}
         <footer className="py-8 px-8 border-t border-border/30 text-center">
-          <p className="text-xs text-muted-foreground">
-            Built for Claude Code users who want better plan reviews.
+          <p className="text-xs text-muted-foreground inline-flex items-center justify-center gap-1">
+            <a href="https://github.com/backnotprop" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors"><svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>backnotprop</a> · <a href="https://x.com/backnotprop" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary transition-colors">@backnotprop</a>
           </p>
+          <p className="text-xs text-muted-foreground/60 mt-2">&copy; 2025 backnotprop. All rights reserved.</p>
         </footer>
       </div>
     </div>

@@ -11,7 +11,7 @@ const TOTAL_WIDTH = NATIVE_SIZE * FRAMES * SCALE; // 768px at 64px scale
 export const TaterSpriteSitting: React.FC = () => {
   return (
     <div
-      className="hidden lg:block absolute pointer-events-none z-10"
+      className="hidden md:block absolute pointer-events-none z-10"
       style={{
         top: -40,
         right: -4,

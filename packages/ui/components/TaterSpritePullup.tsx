@@ -11,7 +11,7 @@ const TOTAL_WIDTH = NATIVE_SIZE * FRAMES * SCALE;
 export const TaterSpritePullup: React.FC = () => {
   return (
     <div
-      className="absolute pointer-events-none hidden lg:block"
+      className="absolute pointer-events-none hidden md:block -z-10"
       style={{
         bottom: -49, // Hangs off bottom of dialog
         left: 12,

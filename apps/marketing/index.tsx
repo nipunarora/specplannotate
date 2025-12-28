@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Landing } from '@plannotator/ui/components/Landing';
+import { ThemeProvider } from '@plannotator/ui/components/ThemeProvider';
 import '@plannotator/editor/styles';
 
 const rootElement = document.getElementById('root');
@@ -11,6 +12,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <Landing />
+    <ThemeProvider defaultTheme="dark">
+      <Landing />
+    </ThemeProvider>
   </React.StrictMode>
 );

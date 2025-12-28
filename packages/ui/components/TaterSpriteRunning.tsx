@@ -19,7 +19,7 @@ const SCREEN_TRAVERSE_TIME = 18;
 export const TaterSpriteRunning: React.FC = () => {
   return (
     <div
-      className="fixed pointer-events-none hidden lg:block"
+      className="fixed pointer-events-none hidden md:block"
       style={{
         bottom: 0,
         right: -DISPLAY_WIDTH, // Start off-screen right

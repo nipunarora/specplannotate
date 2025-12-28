@@ -1,6 +1,6 @@
 {
   "name": "plannotator",
-  "description": "Interactive Plan Review: Mark up and refine your plans using native Claude Code hooks, then easily share for team collaboration.",
+  "description": "Interactive Plan Review: Mark up and refine your plans using a UI, easily share for team collaboration, automatically integrates with plan mode hooks.",
   "version": "1.0.0",
   "author": {
     "name": "backnotprop"

@@ -36,3 +36,11 @@ bun run build:marketing  # Static build for marketing site
 ## Hook Integration
 
 See `apps/hooks/shell/exit-plan-mode.sh` for the Claude Code hook script.
+
+---
+
+## License & Legal
+
+**Copyright (c) 2025 backnotprop.**
+
+This project is licensed under the **Business Source License 1.1 (BSL)**.
