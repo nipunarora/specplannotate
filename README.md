@@ -7,8 +7,11 @@
 Interactive Plan Review: Mark up and refine your plans using a UI, easily share for team collaboration, automatically integrates with Claude Code plan mode.
 
 <p align="center">
+  <a href="https://www.youtube.com/watch?v=a_AT7cEN_9I">Watch video</a>
+</p>
+<p align="center">
   <a href="https://www.youtube.com/watch?v=a_AT7cEN_9I">
-    <img src="https://img.youtube.com/vi/a_AT7cEN_9I/maxresdefault.jpg" alt="Watch the demo" width="600" />
+    <img src="apps/marketing/public/youtube.png" alt="Watch the demo" width="600" />
   </a>
 </p>
 
