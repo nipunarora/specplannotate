@@ -31,6 +31,7 @@ export { isRemoteSession, getServerPort } from "./remote";
 export { openBrowser } from "./browser";
 export * from "./integrations";
 export * from "./storage";
+export * from "./speckit";
 
 // --- Types ---
 

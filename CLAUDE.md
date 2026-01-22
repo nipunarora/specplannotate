@@ -1,6 +1,6 @@
 # Plannotator
 
-A plan review UI for Claude Code that intercepts `ExitPlanMode` via hooks, letting users approve or request changes with annotated feedback. Also provides code review for git diffs.
+A plan review UI for Claude Code that intercepts `ExitPlanMode` via hooks, letting users approve or request changes with annotated feedback. Also provides code review for git diffs and spec-kit document review.
 
 ## Project Structure
 
@@ -9,9 +9,9 @@ plannotator/
 ├── apps/
 │   ├── hook/                     # Claude Code plugin
 │   │   ├── .claude-plugin/plugin.json
-│   │   ├── commands/             # Slash commands (plannotator-review.md)
+│   │   ├── commands/             # Slash commands (plannotator-review.md, speckit-review.md)
 │   │   ├── hooks/hooks.json      # PermissionRequest hook config
-│   │   ├── server/index.ts       # Entry point (plan + review subcommand)
+│   │   ├── server/index.ts       # Entry point (plan + review + speckit subcommands)
 │   │   └── dist/                 # Built single-file apps (index.html, review.html)
 │   ├── opencode-plugin/          # OpenCode plugin
 │   │   ├── commands/             # Slash commands (plannotator-review.md)
@@ -26,6 +26,8 @@ plannotator/
 │   ├── server/                   # Shared server implementation
 │   │   ├── index.ts              # startPlannotatorServer(), handleServerReady()
 │   │   ├── review.ts             # startReviewServer(), handleReviewServerReady()
+│   │   ├── speckit.ts            # detectSpeckitContext(), combineSpeckitDocuments(), applyAnnotationsToFiles()
+│   │   ├── speckit-server.ts     # startSpeckitServer() - speckit-specific server with file modification
 │   │   ├── storage.ts            # Plan saving to disk (getPlanDir, savePlan, etc.)
 │   │   ├── remote.ts             # isRemoteSession(), getServerPort()
 │   │   ├── browser.ts            # openBrowser()
@@ -54,9 +56,20 @@ plannotator/
 /plugin marketplace add backnotprop/plannotator
 ```
 
-**Local testing:**
+**Local installation:**
 
 ```bash
+# 1. Install Bun (if not already installed)
+curl -fsSL https://bun.sh/install | bash
+# or: npm install -g bun
+
+# 2. Clone and build
+git clone https://github.com/backnotprop/plannotator.git
+cd plannotator
+bun install
+bun run build:review && bun run build:hook
+
+# 3. Run Claude Code with the plugin
 claude --plugin-dir ./apps/hook
 ```
 
@@ -111,6 +124,59 @@ Send Feedback → feedback sent to agent session
 Approve → "LGTM" sent to agent session
 ```
 
+## Speckit Review Flow
+
+Review [spec-kit](https://github.com/github/spec-kit) specification documents for the current feature branch. Supports **file modification** - annotations (deletions, replacements, insertions) are applied directly to the source spec files on approval.
+
+```
+User runs /speckit-review command
+        ↓
+Detect current git branch name
+        ↓
+Read spec files from specs/[branch-name]/
+  - spec.md (required)
+  - plan.md (required)
+  - tasks.md (required)
+  - research.md, data-model.md, contracts/*.md (optional)
+  - memory/constitution.md (optional, project-level)
+        ↓
+Combine all documents into single markdown with section headers
+Track file mappings (which content came from which file)
+        ↓
+Speckit server starts, opens browser
+        ↓
+User reviews and annotates spec documents
+        ↓
+Deny   → feedback sent to Claude, no file changes
+Approve → annotations applied to source files, then approved
+```
+
+**UI Buttons in Speckit Mode:**
+- **Deny** (red) - Sends feedback to Claude without modifying files
+- **Approve** / **Apply & Approve** - Applies annotations to source files, then approves
+
+**Supported Annotation Types for File Modification:**
+- `DELETION` - Remove the selected text from source file
+- `REPLACEMENT` - Replace selected text with new text
+- `INSERTION` - Insert new text after the selected context
+- `COMMENT` - Feedback only, no file modification
+
+**Expected directory structure:**
+```
+project/
+├── memory/
+│   └── constitution.md      # Project principles (optional)
+├── specs/
+│   └── feature-branch-name/
+│       ├── spec.md          # Feature specification
+│       ├── plan.md          # Technical plan
+│       ├── tasks.md         # Implementation tasks
+│       ├── research.md      # Research notes (optional)
+│       ├── data-model.md    # Data structures (optional)
+│       └── contracts/       # API specs (optional)
+│           └── api.md
+```
+
 ## Server API
 
 ### Plan Server (`packages/server/index.ts`)
@@ -133,7 +199,26 @@ Approve → "LGTM" sent to agent session
 | `/api/image`          | GET    | Serve image by path query param            |
 | `/api/upload`         | POST   | Upload image, returns temp path            |
 
-Both servers use random ports locally or fixed port (`19432`) in remote mode.
+### Speckit Server (`packages/server/speckit-server.ts`)
+
+| Endpoint              | Method | Purpose                                    |
+| --------------------- | ------ | ------------------------------------------ |
+| `/api/plan`           | GET    | Returns `{ plan, origin, mode: "speckit", featureName, fileMappings }` |
+| `/api/approve`        | POST   | Apply annotations to files, approve (body: feedback, annotations) |
+| `/api/deny`           | POST   | Deny without file changes (body: feedback) |
+| `/api/image`          | GET    | Serve image by path query param            |
+| `/api/upload`         | POST   | Upload image, returns temp path            |
+
+**Approve response:**
+```json
+{
+  "ok": true,
+  "modifiedFiles": ["specs/feature/spec.md", "specs/feature/plan.md"],
+  "errors": []
+}
+```
+
+All servers use random ports locally or fixed port (`19432`) in remote mode.
 
 ## Data Types
 
@@ -243,7 +328,7 @@ Code blocks use bundled `highlight.js`. Language is extracted from fence (```rus
 
 ## Requirements
 
-- Bun runtime
+- **Bun runtime** - Install via `curl -fsSL https://bun.sh/install | bash` or `npm install -g bun`
 - Claude Code with plugin/hooks support, or OpenCode
 - Cross-platform: macOS (`open`), Linux (`xdg-open`), Windows (`start`)
 
@@ -280,6 +365,81 @@ Running only `build:opencode` will copy stale HTML files.
 
 ## Test plugin locally
 
-```
+```bash
 claude --plugin-dir ./apps/hook
+```
+
+### Available slash commands
+
+| Command | Description |
+|---------|-------------|
+| `/plannotator-review` | Review current git diff with annotations |
+| `/speckit-review` | Review spec-kit documents for current feature branch |
+
+### Testing speckit-review
+
+1. Create spec files for your feature branch:
+   ```bash
+   # Assuming you're on branch "my-feature"
+   mkdir -p specs/my-feature
+   echo "# Specification
+
+   This is the feature specification.
+
+   ## Requirements
+   - Requirement 1
+   - Requirement 2" > specs/my-feature/spec.md
+
+   echo "# Technical Plan
+
+   ## Architecture
+   The system uses a client-server architecture." > specs/my-feature/plan.md
+
+   echo "# Tasks
+
+   - [ ] Task 1: Setup
+   - [ ] Task 2: Implementation
+   - [ ] Task 3: Testing" > specs/my-feature/tasks.md
+   ```
+
+2. Run Claude Code with the plugin:
+   ```bash
+   claude --plugin-dir ./apps/hook
+   ```
+
+3. Use the `/speckit-review` command to review your spec documents
+
+4. **To test file modification:**
+   - Select text in the spec and create a DELETION, REPLACEMENT, or INSERTION annotation
+   - Click "Apply & Approve"
+   - Check that the source files in `specs/my-feature/` were modified
+
+### Speckit Review Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Speckit Review UI                        │
+├─────────────────────────────────────────────────────────────┤
+│  [Deny]  [Apply & Approve]                                  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ## Specification                                     │   │
+│  │                                                      │   │
+│  │ This is the feature specification.     ← Select text │   │
+│  │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~         │   │
+│  │ [Delete] [Replace] [Insert] [Comment]  ← Annotate    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ## Technical Plan                                    │   │
+│  │ ...                                                  │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+
+On "Apply & Approve":
+  1. Annotations are sent to server
+  2. Server finds each annotation's text in source files
+  3. Applies DELETION/REPLACEMENT/INSERTION to source files
+  4. Returns list of modified files
+  5. UI shows "Spec Approved" with modified file list
 ```

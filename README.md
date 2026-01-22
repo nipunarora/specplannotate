@@ -28,6 +28,7 @@ Interactive Plan Review for AI Coding Agents. Mark up and refine your plans usin
 
 **New:**
 
+ - **Spec-Kit Review** *(Jan 2026)* — Run `/speckit-review` to review [spec-kit](https://github.com/github/spec-kit) specification documents. Annotations (deletions, replacements, insertions) are applied directly to your spec files on approval!
  - **Code Review** *(Jan 2026)* — Run `/plannotator-review` to review git diffs with inline annotations (select line numbers to annotate), switch between diff views, and send feedback to your agent
  - Attach and annotate images with your feedback (pen, arrow, circle tools)
  - Auto-save approved plans to [Obsidian](https://obsidian.md/) and [Bear Notes](https://bear.app/)
@@ -58,6 +59,70 @@ irm https://plannotator.ai/install.ps1 | iex
 ```
 
 See [apps/hook/README.md](apps/hook/README.md) for detailed installation instructions including a `manual hook` approach.
+
+### Alternative Installation Methods
+
+<details>
+<summary><strong>Local Development/Testing</strong></summary>
+
+Run Claude Code with the plugin loaded directly from your local directory:
+
+```bash
+claude --plugin-dir ./apps/hook
+```
+
+</details>
+
+<details>
+<summary><strong>Fork & Use Your Own Marketplace</strong></summary>
+
+To distribute your own fork via the marketplace:
+
+1. Fork/clone and push to your GitHub repo (must be public)
+
+2. Update `.claude-plugin/marketplace.json` with your GitHub username:
+   ```json
+   {
+     "owner": "your-github-username"
+   }
+   ```
+
+3. Install via Claude Code:
+   ```
+   /plugin marketplace add your-github-username/plannotator
+   /plugin install plannotator@plannotator
+   ```
+
+4. Restart Claude Code after installation
+
+</details>
+
+<details>
+<summary><strong>Manual Hooks (No Plugin)</strong></summary>
+
+Add hooks directly to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "plannotator"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This requires the `plannotator` CLI to be installed first via the install script above.
+
+</details>
 
 ---
 
@@ -94,6 +159,34 @@ When your AI agent finishes planning, Plannotator:
 2. Lets you annotate the plan visually (delete, insert, replace, comment)
 3. **Approve** → Agent proceeds with implementation
 4. **Request changes** → Your annotations are sent back as structured feedback
+
+---
+
+## Spec-Kit Review
+
+Review and edit [spec-kit](https://github.com/github/spec-kit) specification documents with file modification support.
+
+**Setup your spec files:**
+```
+project/
+├── specs/
+│   └── your-feature-branch/
+│       ├── spec.md          # Feature specification
+│       ├── plan.md          # Technical plan
+│       └── tasks.md         # Implementation tasks
+```
+
+**Run the review:**
+```
+/speckit-review
+```
+
+The command auto-detects your current git branch and loads specs from `specs/[branch-name]/`.
+
+**Key features:**
+- **File modification** — Annotations (deletions, replacements, insertions) are applied directly to your spec files when you click "Apply & Approve"
+- **Deny button** — Send feedback to Claude without modifying files
+- **Combined view** — All spec documents displayed in a single reviewable document
 
 ---
 

@@ -26,7 +26,16 @@ import {
   startReviewServer,
   handleReviewServerReady,
 } from "@plannotator/server/review";
-import { getGitContext, runGitDiff } from "@plannotator/server/git";
+import { getGitContext, runGitDiff, getCurrentBranch } from "@plannotator/server/git";
+import {
+  detectSpeckitContext,
+  combineSpeckitDocuments,
+  generateNoSpecError,
+} from "@plannotator/server/speckit";
+import {
+  startSpeckitServer,
+  handleSpeckitServerReady,
+} from "@plannotator/server/speckit-server";
 
 // Embed the built HTML at compile time
 // @ts-ignore - Bun import attribute for text
@@ -80,6 +89,64 @@ if (args[0] === "review") {
 
   // Output feedback (captured by slash command)
   console.log(result.feedback || "No feedback provided.");
+  process.exit(0);
+
+} else if (args[0] === "speckit") {
+  // ============================================
+  // SPECKIT REVIEW MODE
+  // ============================================
+
+  // Detect spec-kit context from current git branch
+  const speckitContext = await detectSpeckitContext();
+
+  if (!speckitContext) {
+    // Output helpful error message
+    const branchName = await getCurrentBranch();
+    console.log(generateNoSpecError(branchName));
+    process.exit(0);
+  }
+
+  // Combine all spec documents into a single markdown
+  const { markdown: combinedMarkdown, featureName, includedFiles, fileMappings } =
+    await combineSpeckitDocuments(speckitContext);
+
+  // Log included files for debugging
+  console.error(`[Speckit] Reviewing feature: ${featureName}`);
+  console.error(`[Speckit] Included files: ${includedFiles.join(", ")}`);
+
+  // Start the speckit server with file modification support
+  const server = await startSpeckitServer({
+    plan: combinedMarkdown,
+    featureName,
+    fileMappings,
+    origin: "claude-code",
+    sharingEnabled,
+    htmlContent: planHtmlContent,
+    onReady: handleSpeckitServerReady,
+  });
+
+  // Wait for user decision
+  const result = await server.waitForDecision();
+
+  // Give browser time to receive response and update UI
+  await Bun.sleep(1500);
+
+  // Cleanup
+  server.stop();
+
+  // Output result
+  if (result.approved) {
+    if (result.modifiedFiles && result.modifiedFiles.length > 0) {
+      console.log(`Spec approved. Modified files:\n${result.modifiedFiles.map(f => `  - ${f}`).join("\n")}`);
+    } else {
+      console.log("Spec approved (no file modifications).");
+    }
+    if (result.errors && result.errors.length > 0) {
+      console.error(`Warnings:\n${result.errors.join("\n")}`);
+    }
+  } else {
+    console.log(result.feedback || "Spec review denied by user.");
+  }
   process.exit(0);
 
 } else {

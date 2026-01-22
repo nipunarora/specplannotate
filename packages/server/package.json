@@ -11,7 +11,9 @@
     "./remote": "./remote.ts",
     "./browser": "./browser.ts",
     "./storage": "./storage.ts",
-    "./git": "./git.ts"
+    "./git": "./git.ts",
+    "./speckit": "./speckit.ts",
+    "./speckit-server": "./speckit-server.ts"
   },
   "files": [
     "*.ts"

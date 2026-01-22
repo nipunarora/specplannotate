@@ -330,6 +330,9 @@ const App: React.FC = () => {
   const [showPermissionModeSetup, setShowPermissionModeSetup] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>('bypassPermissions');
   const [sharingEnabled, setSharingEnabled] = useState(true);
+  const [mode, setMode] = useState<'plan' | 'speckit'>('plan');
+  const [speckitFeatureName, setSpeckitFeatureName] = useState<string | null>(null);
+  const [modifiedFiles, setModifiedFiles] = useState<string[]>([]);
   const viewerRef = useRef<ViewerHandle>(null);
 
   // URL-based sharing
@@ -387,16 +390,23 @@ const App: React.FC = () => {
         if (!res.ok) throw new Error('Not in API mode');
         return res.json();
       })
-      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean }) => {
+      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean; mode?: 'plan' | 'speckit'; featureName?: string }) => {
         setMarkdown(data.plan);
         setIsApiMode(true);
         if (data.sharingEnabled !== undefined) {
           setSharingEnabled(data.sharingEnabled);
         }
+        // Set mode (default to 'plan' for backwards compatibility)
+        if (data.mode) {
+          setMode(data.mode);
+        }
+        if (data.featureName) {
+          setSpeckitFeatureName(data.featureName);
+        }
         if (data.origin) {
           setOrigin(data.origin);
-          // For Claude Code, check if user needs to configure permission mode
-          if (data.origin === 'claude-code' && needsPermissionModeSetup()) {
+          // For Claude Code (non-speckit), check if user needs to configure permission mode
+          if (data.origin === 'claude-code' && data.mode !== 'speckit' && needsPermissionModeSetup()) {
             setShowPermissionModeSetup(true);
           }
           // Load saved permission mode preference
@@ -475,6 +485,34 @@ const App: React.FC = () => {
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
+      // Speckit mode: send annotations for file modification
+      if (mode === 'speckit') {
+        const speckitAnnotations = annotations
+          .filter(a => a.type !== 'GLOBAL_COMMENT')
+          .map(a => ({
+            type: a.type,
+            originalText: a.originalText,
+            text: a.text,
+          }));
+
+        const res = await fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feedback: diffOutput,
+            annotations: speckitAnnotations,
+          }),
+        });
+
+        const result = await res.json();
+        if (result.modifiedFiles) {
+          setModifiedFiles(result.modifiedFiles);
+        }
+        setSubmitted('approved');
+        return;
+      }
+
+      // Regular plan mode
       const obsidianSettings = getObsidianSettings();
       const bearSettings = getBearSettings();
       const agentSwitchSettings = getAgentSwitchSettings();
@@ -532,6 +570,18 @@ const App: React.FC = () => {
   const handleDeny = async () => {
     setIsSubmitting(true);
     try {
+      // Speckit mode: just send feedback
+      if (mode === 'speckit') {
+        await fetch('/api/deny', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: diffOutput }),
+        });
+        setSubmitted('denied');
+        return;
+      }
+
+      // Regular plan mode
       const planSaveSettings = getPlanSaveSettings();
       await fetch('/api/deny', {
         method: 'POST',
@@ -674,8 +724,47 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1 md:gap-2">
-            {isApiMode && (
+            {isApiMode && mode === 'speckit' && (
               <>
+                {/* Speckit mode: Deny and Approve buttons */}
+                <button
+                  onClick={handleDeny}
+                  disabled={isSubmitting}
+                  className={`p-1.5 md:px-2.5 md:py-1 rounded-md text-xs font-medium transition-all ${
+                    isSubmitting
+                      ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
+                      : 'bg-destructive/15 text-destructive hover:bg-destructive/25 border border-destructive/30'
+                  }`}
+                  title="Deny spec and send feedback"
+                >
+                  <svg className="w-4 h-4 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="hidden md:inline">{isSubmitting ? 'Sending...' : 'Deny'}</span>
+                </button>
+
+                <button
+                  onClick={handleApprove}
+                  disabled={isSubmitting}
+                  className={`px-2 py-1 md:px-2.5 rounded-md text-xs font-medium transition-all ${
+                    isSubmitting
+                      ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
+                      : 'bg-success text-success-foreground hover:opacity-90'
+                  }`}
+                  title={annotations.length > 0 ? 'Apply changes and approve' : 'Approve spec'}
+                >
+                  <span className="md:hidden">{isSubmitting ? '...' : 'OK'}</span>
+                  <span className="hidden md:inline">
+                    {isSubmitting ? 'Applying...' : annotations.length > 0 ? 'Apply & Approve' : 'Approve'}
+                  </span>
+                </button>
+
+                <div className="w-px h-5 bg-border/50 mx-1 hidden md:block" />
+              </>
+            )}
+            {isApiMode && mode !== 'speckit' && (
+              <>
+                {/* Regular plan mode: Send Feedback and Approve buttons */}
                 <button
                   onClick={() => {
                     if (annotations.length === 0) {
@@ -891,11 +980,17 @@ const App: React.FC = () => {
               <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
                 submitted === 'approved'
                   ? 'bg-success/20 text-success'
-                  : 'bg-accent/20 text-accent'
+                  : mode === 'speckit'
+                    ? 'bg-destructive/20 text-destructive'
+                    : 'bg-accent/20 text-accent'
               }`}>
                 {submitted === 'approved' ? (
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : mode === 'speckit' ? (
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 ) : (
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -906,13 +1001,35 @@ const App: React.FC = () => {
 
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold text-foreground">
-                  {submitted === 'approved' ? 'Plan Approved' : 'Feedback Sent'}
+                  {mode === 'speckit'
+                    ? submitted === 'approved'
+                      ? 'Spec Approved'
+                      : 'Spec Denied'
+                    : submitted === 'approved'
+                      ? 'Plan Approved'
+                      : 'Feedback Sent'}
                 </h2>
                 <p className="text-muted-foreground">
-                  {submitted === 'approved'
-                    ? `${agentName} will proceed with the implementation.`
-                    : `${agentName} will revise the plan based on your annotations.`}
+                  {mode === 'speckit'
+                    ? submitted === 'approved'
+                      ? modifiedFiles.length > 0
+                        ? `${modifiedFiles.length} file${modifiedFiles.length !== 1 ? 's' : ''} modified based on your annotations.`
+                        : 'Spec approved without modifications.'
+                      : `${agentName} will revise the spec based on your feedback.`
+                    : submitted === 'approved'
+                      ? `${agentName} will proceed with the implementation.`
+                      : `${agentName} will revise the plan based on your annotations.`}
                 </p>
+                {mode === 'speckit' && submitted === 'approved' && modifiedFiles.length > 0 && (
+                  <div className="mt-3 text-left bg-muted/50 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground font-medium mb-2">Modified files:</p>
+                    <ul className="text-xs text-foreground space-y-1">
+                      {modifiedFiles.map((file, i) => (
+                        <li key={i} className="font-mono">{file}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-border space-y-2">
