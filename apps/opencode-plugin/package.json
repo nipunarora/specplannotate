@@ -1,7 +1,7 @@
 {
-  "name": "@plannotator/opencode",
+  "name": "@specannotate/opencode",
   "version": "0.6.7",
-  "description": "Plannotator plugin for OpenCode - interactive plan review with visual annotation",
+  "description": "Specannotate plugin for OpenCode - interactive plan review with visual annotation",
   "author": "nipunarora",
   "license": "BSL-1.1",
   "repository": {
@@ -16,7 +16,8 @@
   "keywords": [
     "opencode",
     "opencode-plugin",
-    "plannotator",
+    "specannotate",
+    "spec-kit",
     "plan-review",
     "ai-agent",
     "coding-agent"

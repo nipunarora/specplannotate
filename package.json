@@ -1,8 +1,8 @@
 {
-  "name": "plannotator",
+  "name": "specannotate",
   "version": "0.6.7",
   "private": true,
-  "description": "Interactive Plan Review for Claude Code - annotate plans visually, share with team, automatically send feedback",
+  "description": "Interactive Plan Review for Claude Code - annotate plans visually, share with team, automatically send feedback. Fork of Plannotator with spec-kit integration.",
   "author": "nipunarora",
   "license": "BSL-1.1",
   "repository": {

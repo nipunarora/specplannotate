@@ -1,4 +1,4 @@
-# @plannotator/opencode
+# @specannotate/opencode
 
 **Annotate plans. Not in the terminal.**
 
@@ -24,13 +24,13 @@ Add to your `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@plannotator/opencode@latest"]
+  "plugin": ["@specannotate/opencode@latest"]
 }
 ```
 
 Restart OpenCode. The `submit_plan` tool is now available.
 
-> **Slash commands:** Run the install script to get `/plannotator-review`:
+> **Slash commands:** Run the install script to get `/specannotate-review`:
 > ```bash
 > curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.sh | bash
 > ```
@@ -38,7 +38,7 @@ Restart OpenCode. The `submit_plan` tool is now available.
 
 ## How It Works
 
-1. Agent calls `submit_plan` → Plannotator opens in your browser
+1. Agent calls `submit_plan` → Specannotate opens in your browser
 2. Select text → annotate (delete, replace, comment)
 3. **Approve** → Agent proceeds with implementation
 4. **Request changes** → Annotations sent back as structured feedback
@@ -54,9 +54,11 @@ Restart OpenCode. The `submit_plan` tool is now available.
 
 | Variable | Description |
 |----------|-------------|
-| `PLANNOTATOR_REMOTE` | Set to `1` for remote mode (devcontainer, SSH). Uses fixed port and skips browser open. |
-| `PLANNOTATOR_PORT` | Fixed port to use. Default: random locally, `19432` for remote sessions. |
-| `PLANNOTATOR_BROWSER` | Custom browser to open plans in. macOS: app name or path. Linux/Windows: executable path. |
+| `SPECANNOTATE_REMOTE` (or `PLANNOTATOR_REMOTE`) | Set to `1` for remote mode (devcontainer, SSH). Uses fixed port and skips browser open. |
+| `SPECANNOTATE_PORT` (or `PLANNOTATOR_PORT`) | Fixed port to use. Default: random locally, `19432` for remote sessions. |
+| `SPECANNOTATE_BROWSER` (or `PLANNOTATOR_BROWSER`) | Custom browser to open plans in. macOS: app name or path. Linux/Windows: executable path. |
+
+> **Note:** Both `SPECANNOTATE_*` and `PLANNOTATOR_*` environment variable names are supported for backward compatibility.
 
 ## Devcontainer / Docker
 
@@ -65,8 +67,8 @@ Works in containerized environments. Set the env vars and forward the port:
 ```json
 {
   "containerEnv": {
-    "PLANNOTATOR_REMOTE": "1",
-    "PLANNOTATOR_PORT": "9999"
+    "SPECANNOTATE_REMOTE": "1",
+    "SPECANNOTATE_PORT": "9999"
   },
   "forwardPorts": [9999]
 }
@@ -80,22 +82,22 @@ See [devcontainer.md](./devcontainer.md) for full setup details.
 
 Save approved plans directly to your Obsidian vault.
 
-1. Open Settings in Plannotator UI
+1. Open Settings in Specannotate UI
 2. Enable "Obsidian Integration" and select your vault
 3. Approved plans save automatically with:
    - Human-readable filenames: `Title - Jan 2, 2026 2-30pm.md`
    - YAML frontmatter (`created`, `source`, `tags`)
    - Auto-extracted tags from plan title and code languages
-   - Backlink to `[[Plannotator Plans]]` for graph view
+   - Backlink to `[[Specannotate Plans]]` for graph view
   
 <img width="1190" height="730" alt="image" src="https://github.com/user-attachments/assets/5036a3ea-e5e8-426c-882d-0a1d991c1625" />
 
 
 ## Links
 
-- [Website](https://plannotator.ai)
 - [GitHub](https://github.com/nipunarora/specplannotate)
 - [Claude Code Plugin](https://github.com/nipunarora/specplannotate/tree/main/apps/hook)
+- [Original Plannotator](https://github.com/backnotprop/plannotator) by backnotprop
 
 ## License
 

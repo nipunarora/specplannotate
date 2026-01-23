@@ -47,7 +47,7 @@
       },
     },
     "apps/opencode-plugin": {
-      "name": "@plannotator/opencode",
+      "name": "@specannotate/opencode",
       "version": "0.6.7",
       "dependencies": {
         "@opencode-ai/plugin": "^1.1.10",
@@ -271,8 +271,6 @@
 
     "@plannotator/marketing": ["@plannotator/marketing@workspace:apps/marketing"],
 
-    "@plannotator/opencode": ["@plannotator/opencode@workspace:apps/opencode-plugin"],
-
     "@plannotator/portal": ["@plannotator/portal@workspace:apps/portal"],
 
     "@plannotator/review": ["@plannotator/review@workspace:apps/review"],
@@ -346,6 +344,8 @@
     "@shikijs/types": ["@shikijs/types@3.21.0", "", { "dependencies": { "@shikijs/vscode-textmate": "^10.0.2", "@types/hast": "^3.0.4" } }, "sha512-zGrWOxZ0/+0ovPY7PvBU2gIS9tmhSUUt30jAcNV0Bq0gb2S98gwfjIs1vxlmH5zM7/4YxLamT6ChlqqAJmPPjA=="],
 
     "@shikijs/vscode-textmate": ["@shikijs/vscode-textmate@10.0.2", "", {}, "sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg=="],
+
+    "@specannotate/opencode": ["@specannotate/opencode@workspace:apps/opencode-plugin"],
 
     "@tailwindcss/node": ["@tailwindcss/node@4.1.18", "", { "dependencies": { "@jridgewell/remapping": "^2.3.4", "enhanced-resolve": "^5.18.3", "jiti": "^2.6.1", "lightningcss": "1.30.2", "magic-string": "^0.30.21", "source-map-js": "^1.2.1", "tailwindcss": "4.1.18" } }, "sha512-DoR7U1P7iYhw16qJ49fgXUlry1t4CpXeErJHnQ44JgTSKMaZUdf17cfn5mHchfJ4KRBZRFA/Coo+MUF5+gOaCQ=="],
 

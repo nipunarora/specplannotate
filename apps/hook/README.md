@@ -105,7 +105,7 @@ Host your-server
 Approved plans can be automatically saved to your Obsidian vault.
 
 **Setup:**
-1. Open Settings (gear icon) in Plannotator
+1. Open Settings (gear icon) in Specannotate
 2. Enable "Obsidian Integration"
 3. Select your vault from the dropdown (auto-detected) or enter the path manually
 4. Set folder name (default: `plannotator`)
@@ -114,7 +114,7 @@ Approved plans can be automatically saved to your Obsidian vault.
 - Plans saved with human-readable filenames: `Title - Jan 2, 2026 2-30pm.md`
 - YAML frontmatter with `created`, `source`, and `tags`
 - Tags extracted automatically from the plan title and code languages
-- Backlink to `[[Plannotator Plans]]` for graph connectivity
+- Backlink to `[[Specannotate Plans]]` for graph connectivity
 
 **Example saved file:**
 ```markdown
@@ -124,7 +124,7 @@ source: plannotator
 tags: [plan, authentication, typescript, sql]
 ---
 
-[[Plannotator Plans]]
+[[Specannotate Plans]]
 
 # Implementation Plan: User Authentication
 ...

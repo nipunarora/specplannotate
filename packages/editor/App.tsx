@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { parseMarkdownToBlocks, exportDiff, extractFrontmatter, Frontmatter } from '@plannotator/ui/utils/parser';
 import { Viewer, ViewerHandle } from '@plannotator/ui/components/Viewer';
 import { AnnotationPanel } from '@plannotator/ui/components/AnnotationPanel';
@@ -26,6 +26,7 @@ import {
 } from '@plannotator/ui/utils/permissionMode';
 import { PermissionModeSetup } from '@plannotator/ui/components/PermissionModeSetup';
 import { ImageAnnotator } from '@plannotator/ui/components/ImageAnnotator';
+import { SpeckitFileTree, SpeckitFileMapping } from '@plannotator/ui/components/SpeckitFileTree';
 
 const PLAN_CONTENT = `# Implementation Plan: Real-time Collaboration
 
@@ -333,7 +334,10 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<'plan' | 'speckit'>('plan');
   const [speckitFeatureName, setSpeckitFeatureName] = useState<string | null>(null);
   const [modifiedFiles, setModifiedFiles] = useState<string[]>([]);
+  const [speckitFileMappings, setSpeckitFileMappings] = useState<SpeckitFileMapping[]>([]);
+  const [activeSpeckitFileIndex, setActiveSpeckitFileIndex] = useState(0);
   const viewerRef = useRef<ViewerHandle>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
 
   // URL-based sharing
   const {
@@ -390,7 +394,7 @@ const App: React.FC = () => {
         if (!res.ok) throw new Error('Not in API mode');
         return res.json();
       })
-      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean; mode?: 'plan' | 'speckit'; featureName?: string }) => {
+      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean; mode?: 'plan' | 'speckit'; featureName?: string; fileMappings?: SpeckitFileMapping[] }) => {
         setMarkdown(data.plan);
         setIsApiMode(true);
         if (data.sharingEnabled !== undefined) {
@@ -402,6 +406,10 @@ const App: React.FC = () => {
         }
         if (data.featureName) {
           setSpeckitFeatureName(data.featureName);
+        }
+        // Store file mappings for speckit file tree
+        if (data.fileMappings && data.fileMappings.length > 0) {
+          setSpeckitFileMappings(data.fileMappings);
         }
         if (data.origin) {
           setOrigin(data.origin);
@@ -682,6 +690,109 @@ const App: React.FC = () => {
 
   const diffOutput = useMemo(() => exportDiff(blocks, annotations, globalAttachments), [blocks, annotations, globalAttachments]);
 
+  // Handle speckit file selection - scroll to the section
+  const handleSpeckitFileSelect = useCallback((index: number) => {
+    setActiveSpeckitFileIndex(index);
+
+    // Get the file mapping for scroll target
+    const mapping = speckitFileMappings[index];
+    if (!mapping || !mainContentRef.current) return;
+
+    // Find the section header based on file path
+    const fileName = mapping.filePath.split('/').pop() || '';
+    const labelMap: Record<string, string> = {
+      'constitution.md': 'Constitution',
+      'spec.md': 'Specification',
+      'plan.md': 'Technical Plan',
+      'tasks.md': 'Tasks',
+      'research.md': 'Research',
+      'data-model.md': 'Data Model',
+      'quickstart.md': 'Quick Start',
+    };
+
+    let sectionTitle = labelMap[fileName];
+
+    // Handle contract files
+    if (!sectionTitle && mapping.filePath.includes('contracts/')) {
+      sectionTitle = fileName.replace('.md', '');
+    }
+
+    if (!sectionTitle) return;
+
+    // Find the heading element in the DOM
+    const headings = mainContentRef.current.querySelectorAll('h2, h3');
+    for (const heading of headings) {
+      if (heading.textContent?.trim() === sectionTitle) {
+        heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }, [speckitFileMappings]);
+
+  // Track scroll position to update active file in speckit mode
+  useEffect(() => {
+    if (mode !== 'speckit' || speckitFileMappings.length === 0 || !mainContentRef.current) return;
+
+    const handleScroll = () => {
+      if (!mainContentRef.current) return;
+
+      const scrollTop = mainContentRef.current.scrollTop;
+      const headings = mainContentRef.current.querySelectorAll('h2, h3');
+      const labelMap: Record<string, string> = {
+        'Constitution': 'constitution.md',
+        'Specification': 'spec.md',
+        'Technical Plan': 'plan.md',
+        'Tasks': 'tasks.md',
+        'Research': 'research.md',
+        'Data Model': 'data-model.md',
+        'Quick Start': 'quickstart.md',
+      };
+
+      // Find which section is currently visible (closest to top)
+      let closestHeading: Element | null = null;
+      let closestDistance = Infinity;
+
+      for (const heading of headings) {
+        const rect = heading.getBoundingClientRect();
+        const mainRect = mainContentRef.current.getBoundingClientRect();
+        const relativeTop = rect.top - mainRect.top;
+
+        // We want the heading that's closest to the top of the viewport (but not too far above)
+        if (relativeTop >= -50 && relativeTop < closestDistance) {
+          closestDistance = relativeTop;
+          closestHeading = heading;
+        }
+      }
+
+      if (closestHeading) {
+        const title = closestHeading.textContent?.trim() || '';
+        const fileName = labelMap[title];
+
+        if (fileName) {
+          // Find the file mapping index
+          const fileIndex = speckitFileMappings.findIndex(m => m.filePath.endsWith(fileName));
+          if (fileIndex !== -1 && fileIndex !== activeSpeckitFileIndex) {
+            setActiveSpeckitFileIndex(fileIndex);
+          }
+        } else {
+          // Could be a contract file - check if it matches
+          const contractIndex = speckitFileMappings.findIndex(m =>
+            m.filePath.includes('contracts/') &&
+            m.filePath.endsWith(`${title}.md`)
+          );
+          if (contractIndex !== -1 && contractIndex !== activeSpeckitFileIndex) {
+            setActiveSpeckitFileIndex(contractIndex);
+          }
+        }
+      }
+    };
+
+    const mainEl = mainContentRef.current;
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, [mode, speckitFileMappings, activeSpeckitFileIndex]);
+
   const agentName = useMemo(() => {
     if (origin === 'opencode') return 'OpenCode';
     if (origin === 'claude-code') return 'Claude Code';
@@ -864,8 +975,19 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
+          {/* Speckit File Tree Sidebar */}
+          {mode === 'speckit' && speckitFileMappings.length > 0 && (
+            <SpeckitFileTree
+              files={speckitFileMappings}
+              activeFileIndex={activeSpeckitFileIndex}
+              onSelectFile={handleSpeckitFileSelect}
+              annotations={annotations}
+              featureName={speckitFeatureName || undefined}
+            />
+          )}
+
           {/* Document Area */}
-          <main className="flex-1 overflow-y-auto bg-grid">
+          <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-grid">
             <div className="min-h-full flex flex-col items-center px-4 py-3 md:px-10 md:py-8 xl:px-16">
               {/* Mode Switcher */}
               <div className="w-full max-w-[832px] 2xl:max-w-5xl mb-3 md:mb-4 flex justify-start">
