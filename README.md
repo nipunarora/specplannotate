@@ -65,11 +65,44 @@ See [apps/hook/README.md](apps/hook/README.md) for detailed installation instruc
 <details>
 <summary><strong>Local Development/Testing</strong></summary>
 
-Run Claude Code with the plugin loaded directly from your local directory:
+**Prerequisites:**
+- [Bun runtime](https://bun.sh) - Install via `curl -fsSL https://bun.sh/install | bash`
+
+**Clone and build:**
+
+```bash
+git clone https://github.com/backnotprop/plannotator.git
+cd plannotator
+bun install
+bun run build:hook
+```
+
+**Build and install the binary locally:**
+
+After making changes to server code (`apps/hook/server/`), rebuild the binary:
+
+```bash
+# Build for your platform (macOS ARM example)
+bun build apps/hook/server/index.ts --compile --target=bun-darwin-arm64 --outfile plannotator-darwin-arm64
+
+# Install locally
+cp plannotator-darwin-arm64 ~/.local/bin/plannotator
+chmod +x ~/.local/bin/plannotator
+```
+
+For other platforms, use these targets:
+- macOS Intel: `bun-darwin-x64`
+- Linux x64: `bun-linux-x64`
+- Linux ARM: `bun-linux-arm64`
+- Windows: `bun-windows-x64` (outputs `.exe`)
+
+**Run with local plugin:**
 
 ```bash
 claude --plugin-dir ./apps/hook
 ```
+
+**Note:** When testing hooks (plan review), the globally installed `plannotator` binary is used. For UI-only changes (in `packages/editor/` or `packages/ui/`), run `bun run build:hook` and restart Claude Code. For server changes, rebuild the binary as shown above.
 
 </details>
 

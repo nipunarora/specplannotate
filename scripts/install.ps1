@@ -86,10 +86,11 @@ if ($userPath -notlike "*$installDir*") {
 Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\opencode\node_modules\@plannotator" -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force "$env:USERPROFILE\.bun\install\cache\@plannotator" -ErrorAction SilentlyContinue
 
-# Install Claude Code slash command
+# Install Claude Code slash commands
 $claudeCommandsDir = "$env:USERPROFILE\.claude\commands"
 New-Item -ItemType Directory -Force -Path $claudeCommandsDir | Out-Null
 
+# Install /plannotator-review command
 @"
 ---
 description: Open interactive code review for current changes
@@ -106,6 +107,30 @@ Address the code review feedback above. The user has reviewed your changes in th
 "@ | Set-Content -Path "$claudeCommandsDir\plannotator-review.md"
 
 Write-Host "Installed /plannotator-review command to $claudeCommandsDir\plannotator-review.md"
+
+# Install /speckit-review command
+@"
+---
+description: Review spec-kit specification documents for current feature branch
+allowed-tools: Bash(plannotator:*)
+---
+
+## Spec Review Feedback
+
+!`plannotator speckit`
+
+## Your task
+
+Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Plannotator UI and provided specific annotations and comments.
+
+Focus on the areas they highlighted:
+- Specification details they want changed
+- Technical plan items they disagree with
+- Task ordering or scope concerns
+- Any comments or suggestions they provided
+"@ | Set-Content -Path "$claudeCommandsDir\speckit-review.md"
+
+Write-Host "Installed /speckit-review command to $claudeCommandsDir\speckit-review.md"
 
 # Install OpenCode slash command
 $opencodeCommandsDir = "$env:USERPROFILE\.config\opencode\command"

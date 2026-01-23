@@ -127,10 +127,11 @@ if !ERRORLEVEL! neq 0 (
     echo   set PATH=%%PATH%%;!INSTALL_DIR!
 )
 
-REM Install /review slash command
+REM Install slash commands for Claude Code
 set "CLAUDE_COMMANDS_DIR=%USERPROFILE%\.claude\commands"
 if not exist "!CLAUDE_COMMANDS_DIR!" mkdir "!CLAUDE_COMMANDS_DIR!"
 
+REM Install /plannotator-review command
 (
 echo ---
 echo description: Open interactive code review for current changes
@@ -147,6 +148,30 @@ echo Address the code review feedback above. The user has reviewed your changes 
 ) > "!CLAUDE_COMMANDS_DIR!\plannotator-review.md"
 
 echo Installed /plannotator-review command to !CLAUDE_COMMANDS_DIR!\plannotator-review.md
+
+REM Install /speckit-review command
+(
+echo ---
+echo description: Review spec-kit specification documents for current feature branch
+echo allowed-tools: Bash^(plannotator:*^)
+echo ---
+echo.
+echo ## Spec Review Feedback
+echo.
+echo !`plannotator speckit`
+echo.
+echo ## Your task
+echo.
+echo Address the spec review feedback above. The user has reviewed your specification documents ^(spec.md, plan.md, tasks.md, etc.^) in the Plannotator UI and provided specific annotations and comments.
+echo.
+echo Focus on the areas they highlighted:
+echo - Specification details they want changed
+echo - Technical plan items they disagree with
+echo - Task ordering or scope concerns
+echo - Any comments or suggestions they provided
+) > "!CLAUDE_COMMANDS_DIR!\speckit-review.md"
+
+echo Installed /speckit-review command to !CLAUDE_COMMANDS_DIR!\speckit-review.md
 
 echo.
 echo Test the install:

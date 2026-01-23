@@ -86,10 +86,11 @@ fi
 # Clear any cached OpenCode plugin to force fresh download on next run
 rm -rf "$HOME/.cache/opencode/node_modules/@plannotator" "$HOME/.bun/install/cache/@plannotator" 2>/dev/null || true
 
-# Install /review slash command
+# Install slash commands for Claude Code
 CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 mkdir -p "$CLAUDE_COMMANDS_DIR"
 
+# Install /plannotator-review command
 cat > "$CLAUDE_COMMANDS_DIR/plannotator-review.md" << 'COMMAND_EOF'
 ---
 description: Open interactive code review for current changes
@@ -106,6 +107,30 @@ Address the code review feedback above. The user has reviewed your changes in th
 COMMAND_EOF
 
 echo "Installed /plannotator-review command to ${CLAUDE_COMMANDS_DIR}/plannotator-review.md"
+
+# Install /speckit-review command
+cat > "$CLAUDE_COMMANDS_DIR/speckit-review.md" << 'COMMAND_EOF'
+---
+description: Review spec-kit specification documents for current feature branch
+allowed-tools: Bash(plannotator:*)
+---
+
+## Spec Review Feedback
+
+!`plannotator speckit`
+
+## Your task
+
+Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Plannotator UI and provided specific annotations and comments.
+
+Focus on the areas they highlighted:
+- Specification details they want changed
+- Technical plan items they disagree with
+- Task ordering or scope concerns
+- Any comments or suggestions they provided
+COMMAND_EOF
+
+echo "Installed /speckit-review command to ${CLAUDE_COMMANDS_DIR}/speckit-review.md"
 
 # Install OpenCode slash command
 OPENCODE_COMMANDS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/command"
