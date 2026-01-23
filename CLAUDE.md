@@ -36,7 +36,7 @@ plannotator/
 │   │   ├── integrations.ts       # Obsidian, Bear integrations
 │   │   └── project.ts            # Project name detection for tags
 │   ├── ui/                       # Shared React components
-│   │   ├── components/           # Viewer, Toolbar, Settings, etc.
+│   │   ├── components/           # Viewer, Toolbar, Settings, SpeckitFileTree, etc.
 │   │   ├── utils/                # parser.ts, sharing.ts, storage.ts, planSave.ts, agentSwitch.ts
 │   │   ├── hooks/                # useSharing.ts
 │   │   └── types.ts
@@ -145,9 +145,15 @@ Read spec files from specs/[branch-name]/
 Combine all documents into single markdown with section headers
 Track file mappings (which content came from which file)
         ↓
-Speckit server starts, opens browser
+Speckit server starts, opens browser with UI:
+  - Left sidebar: File tree with navigation
+  - Center: Combined spec document
+  - Right: Annotation panel
         ↓
 User reviews and annotates spec documents
+  - Click files in sidebar to jump to sections
+  - Use j/k or arrows for keyboard navigation
+  - Scroll tracking updates active file
         ↓
 Deny   → feedback sent to Claude, no file changes
 Approve → annotations applied to source files, then approved
@@ -357,7 +363,25 @@ bun run build:marketing  # Static build for plannotator.ai
 bun run build            # Build hook + opencode (main targets)
 ```
 
-**Important:** The OpenCode plugin copies pre-built HTML from `apps/hook/dist/` and `apps/review/dist/`. When making UI changes (in `packages/ui/`, `packages/editor/`, or `packages/review-editor/`), you must rebuild the hook/review first:
+### Important: Rebuild and Reinstall Workflow
+
+The `specannotate` command is a **compiled binary** that embeds the HTML at build time. After making UI changes, you must:
+
+1. **Rebuild the frontend:**
+   ```bash
+   bun run build:hook
+   ```
+
+2. **Reinstall the binary** (to embed new HTML):
+   ```bash
+   bash scripts/install.sh
+   ```
+
+3. **Restart Claude Code** or rerun the command
+
+**Why?** The binary uses `import planHtml from "../dist/index.html" with { type: "text" }` at compile time. This means the HTML is embedded into the binary when it's built, not loaded at runtime. Simply rebuilding the frontend (`bun run build:hook`) updates `apps/hook/dist/index.html`, but the installed binary at `~/.local/bin/specannotate` still contains the old HTML until you reinstall.
+
+**For OpenCode plugin:** The OpenCode plugin copies pre-built HTML from `apps/hook/dist/` and `apps/review/dist/`. When making UI changes (in `packages/ui/`, `packages/editor/`, or `packages/review-editor/`), you must rebuild the hook/review first:
 
 ```bash
 bun run build:hook && bun run build:opencode   # For UI changes
@@ -419,24 +443,30 @@ claude --plugin-dir ./apps/hook
 ### Speckit Review Workflow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Speckit Review UI                        │
-├─────────────────────────────────────────────────────────────┤
-│  [Deny]  [Apply & Approve]                                  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ ## Specification                                     │   │
-│  │                                                      │   │
-│  │ This is the feature specification.     ← Select text │   │
-│  │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~         │   │
-│  │ [Delete] [Replace] [Insert] [Comment]  ← Annotate    │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ ## Technical Plan                                    │   │
-│  │ ...                                                  │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────┬──────────────────────────────────────────────┬─────────────────┐
+│  File Tree    │         Speckit Review UI                    │  Annotations    │
+│  Sidebar      │                                              │     Panel       │
+├───────────────┼──────────────────────────────────────────────┼─────────────────┤
+│  [Deny]  [Apply & Approve]                                                    │
+├───────────────┼──────────────────────────────────────────────┼─────────────────┤
+│  PROJECT      │  ## Specification                            │ [Share URL]     │
+│  📚 Const     │                                              │                 │
+│               │  This is the feature specification.          │ Annotations:    │
+│  SPEC         │  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ │ • 2 deletions   │
+│  📄 Spec ←    │  [Delete] [Replace] [Insert] [Comment]       │ • 1 replacement │
+│  🗺️  Plan     │                                              │                 │
+│  ✅ Tasks     │  ## Technical Plan                           │                 │
+│               │  ...                                         │                 │
+│  CONTRACTS    │                                              │                 │
+│  💻 api       │                                              │                 │
+└───────────────┴──────────────────────────────────────────────┴─────────────────┘
+
+File Tree Features:
+  • Click files to scroll to their section in the combined document
+  • Keyboard navigation: j/k or arrow keys to move between files
+  • Active file highlighting based on scroll position
+  • Grouped by category: Project, Specification, Contracts
+  • File-specific icons for each document type
 
 On "Apply & Approve":
   1. Annotations are sent to server
@@ -444,4 +474,31 @@ On "Apply & Approve":
   3. Applies DELETION/REPLACEMENT/INSERTION to source files
   4. Returns list of modified files
   5. UI shows "Spec Approved" with modified file list
+```
+
+### File Tree Sidebar Implementation
+
+**Component:** `packages/ui/components/SpeckitFileTree.tsx`
+
+The file tree sidebar provides navigation for spec-kit documents:
+
+- **File grouping:** Files are organized into sections (Project, Specification, Contracts)
+- **Icons:** Each file type has a unique icon (📚 Constitution, 📄 Spec, 🗺️ Plan, ✅ Tasks, etc.)
+- **Active tracking:** Scroll position updates the active file highlight
+- **Keyboard navigation:** `j`/`k` or arrow keys move between files
+- **Click navigation:** Clicking a file scrolls to its section header
+
+**Integration in App.tsx:**
+- Fetches `fileMappings` from `/api/plan` response
+- `handleSpeckitFileSelect()` scrolls to section on file click
+- Scroll listener updates `activeSpeckitFileIndex` based on visible headings
+- Conditionally rendered only when `mode === 'speckit' && speckitFileMappings.length > 0`
+
+**File mapping structure:**
+```typescript
+interface SpeckitFileMapping {
+  filePath: string;      // Source file path (e.g., "specs/feature/spec.md")
+  startOffset: number;   // Character offset in combined markdown
+  endOffset: number;     // Character offset in combined markdown
+}
 ```

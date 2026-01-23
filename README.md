@@ -79,9 +79,23 @@ bun install
 bun run build:hook
 ```
 
-**Build and install the binary locally:**
+**Making changes and rebuilding:**
 
-After making changes to server code (`apps/hook/server/`), rebuild the binary:
+The `specannotate` command is a **compiled binary** that embeds the HTML at build time. After making changes, you need to rebuild and reinstall:
+
+```bash
+# 1. Rebuild the frontend (UI/editor changes)
+bun run build:hook
+
+# 2. Reinstall the binary (embeds new HTML)
+bash scripts/install.sh
+
+# 3. Restart Claude Code or rerun the command
+```
+
+**Important:** The binary embeds `apps/hook/dist/index.html` at compile time. Even after running `bun run build:hook`, you must reinstall the binary to pick up the new HTML.
+
+**For manual binary builds** (advanced):
 
 ```bash
 # Build for your platform (macOS ARM example)
@@ -92,11 +106,7 @@ cp specannotate-darwin-arm64 ~/.local/bin/specannotate
 chmod +x ~/.local/bin/specannotate
 ```
 
-For other platforms, use these targets:
-- macOS Intel: `bun-darwin-x64`
-- Linux x64: `bun-linux-x64`
-- Linux ARM: `bun-linux-arm64`
-- Windows: `bun-windows-x64` (outputs `.exe`)
+Other platforms: `bun-darwin-x64`, `bun-linux-x64`, `bun-linux-arm64`, `bun-windows-x64` (outputs `.exe`)
 
 **Run with local plugin:**
 
@@ -104,7 +114,7 @@ For other platforms, use these targets:
 claude --plugin-dir ./apps/hook
 ```
 
-**Note:** When testing hooks (plan review), the globally installed `specannotate` binary is used. For UI-only changes (in `packages/editor/` or `packages/ui/`), run `bun run build:hook` and restart Claude Code. For server changes, rebuild the binary as shown above.
+**Note:** When using `--plugin-dir`, the globally installed `specannotate` binary is still used for hook execution. This approach is best for testing plugin metadata (commands, hooks config) without installing.
 
 </details>
 
@@ -219,9 +229,10 @@ project/
 The command auto-detects your current git branch and loads specs from `specs/[branch-name]/`.
 
 **Key features:**
+- **File Tree Sidebar** — Navigate through spec files with a collapsible sidebar showing all documents grouped by category (Project, Specification, Contracts). Click files to jump to sections, use `j`/`k` or arrow keys for keyboard navigation
 - **File modification** — Annotations (deletions, replacements, insertions) are applied directly to your spec files when you click "Apply & Approve"
 - **Deny button** — Send feedback to Claude without modifying files
-- **Combined view** — All spec documents displayed in a single reviewable document
+- **Combined view** — All spec documents displayed in a single reviewable document with section headers
 
 ---
 
