@@ -1,4 +1,6 @@
-# Plannotator
+# Specannotate
+
+> **Note:** This is a fork of [Plannotator](https://github.com/backnotprop/plannotator) by backnotprop, enhanced with spec-kit integration.
 
 A plan review UI for Claude Code that intercepts `ExitPlanMode` via hooks, letting users approve or request changes with annotated feedback. Also provides code review for git diffs and spec-kit document review.
 
@@ -9,14 +11,14 @@ plannotator/
 ├── apps/
 │   ├── hook/                     # Claude Code plugin
 │   │   ├── .claude-plugin/plugin.json
-│   │   ├── commands/             # Slash commands (plannotator-review.md, speckit-review.md)
+│   │   ├── commands/             # Slash commands (specannotate-review.md, speckit-review.md)
 │   │   ├── hooks/hooks.json      # PermissionRequest hook config
 │   │   ├── server/index.ts       # Entry point (plan + review + speckit subcommands)
 │   │   └── dist/                 # Built single-file apps (index.html, review.html)
 │   ├── opencode-plugin/          # OpenCode plugin
-│   │   ├── commands/             # Slash commands (plannotator-review.md)
+│   │   ├── commands/             # Slash commands (specannotate-review.md)
 │   │   ├── index.ts              # Plugin entry with submit_plan tool + review event handler
-│   │   ├── plannotator.html      # Built plan review app
+│   │   ├── specannotate.html     # Built plan review app
 │   │   └── review-editor.html    # Built code review app
 │   └── review/                   # Standalone review server (for development)
 │       ├── index.html
@@ -65,7 +67,7 @@ curl -fsSL https://bun.sh/install | bash
 
 # 2. Clone and build
 git clone https://github.com/nipunarora/specplannotate.git
-cd plannotator
+cd specplannotate
 bun install
 bun run build:review && bun run build:hook
 
@@ -109,9 +111,9 @@ Deny    → stdout: {"hookSpecificOutput":{"decision":{"behavior":"deny","messag
 ## Code Review Flow
 
 ```
-User runs /plannotator-review command
+User runs /specannotate-review command
         ↓
-Claude Code: plannotator review subcommand runs
+Claude Code: specannotate review subcommand runs
 OpenCode: event handler intercepts command
         ↓
 git diff captures unstaged changes
@@ -373,7 +375,7 @@ claude --plugin-dir ./apps/hook
 
 | Command | Description |
 |---------|-------------|
-| `/plannotator-review` | Review current git diff with annotations |
+| `/specannotate-review` | Review current git diff with annotations |
 | `/speckit-review` | Review spec-kit documents for current feature branch |
 
 ### Testing speckit-review

@@ -1,10 +1,10 @@
-# Plannotator Claude Code Plugin
+# Specannotate Claude Code Plugin
 
-This directory contains the Claude Code plugin configuration for Plannotator.
+This directory contains the Claude Code plugin configuration for Specannotate.
 
 ## Prerequisites
 
-Install the `plannotator` command so Claude Code can use it:
+Install the `specannotate` command so Claude Code can use it:
 
 **macOS / Linux / WSL:**
 ```bash
@@ -33,7 +33,7 @@ In Claude Code:
 
 ```
 /plugin marketplace add nipunarora/specplannotate
-/plugin install plannotator@plannotator
+/plugin install specannotate@specannotate
 ```
 
 **Important:** Restart Claude Code after installing the plugin for the hooks to take effect.
@@ -51,7 +51,7 @@ If you prefer not to use the plugin system, add this to your `~/.claude/settings
         "hooks": [
           {
             "type": "command",
-            "command": "plannotator",
+            "command": "specannotate",
             "timeout": 1800
           }
         ]
@@ -65,7 +65,7 @@ If you prefer not to use the plugin system, add this to your `~/.claude/settings
 
 When Claude Code calls `ExitPlanMode`, this hook intercepts and:
 
-1. Opens Plannotator UI in your browser
+1. Opens Specannotate UI in your browser
 2. Lets you annotate the plan visually
 3. Approve → Claude proceeds with implementation
 4. Request changes → Your annotations are sent back to Claude
@@ -87,7 +87,7 @@ export PLANNOTATOR_REMOTE=1
 export PLANNOTATOR_PORT=9999  # Choose a port you'll forward
 ```
 
-This tells Plannotator to:
+This tells Specannotate to:
 - Use a fixed port instead of a random one (so you can set up port forwarding)
 - Skip auto-opening the browser (since you'll open it manually on your local machine)
 - Print the URL to the terminal for you to access
