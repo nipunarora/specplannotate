@@ -62,14 +62,14 @@ if /i "!VERSION!"=="latest" (
     if !ERRORLEVEL! neq 0 set "TAG=v!TAG!"
 )
 
-echo Installing plannotator !TAG!...
+echo Installing specannotate !TAG!...
 
-set "BINARY_NAME=plannotator-!PLATFORM!.exe"
+set "BINARY_NAME=specannotate-!PLATFORM!.exe"
 set "BINARY_URL=https://github.com/!REPO!/releases/download/!TAG!/!BINARY_NAME!"
 set "CHECKSUM_URL=!BINARY_URL!.sha256"
 
 REM Download binary
-set "TEMP_FILE=%TEMP%\plannotator-!TAG!.exe"
+set "TEMP_FILE=%TEMP%\specannotate-!TAG!.exe"
 curl -fsSL "!BINARY_URL!" -o "!TEMP_FILE!"
 if !ERRORLEVEL! neq 0 (
     echo Failed to download binary >&2
@@ -106,11 +106,11 @@ if /i "!ACTUAL_CHECKSUM!" neq "!EXPECTED_CHECKSUM!" (
 )
 
 REM Install binary
-set "INSTALL_PATH=!INSTALL_DIR!\plannotator.exe"
+set "INSTALL_PATH=!INSTALL_DIR!\specannotate.exe"
 move /y "!TEMP_FILE!" "!INSTALL_PATH!" >nul
 
 echo.
-echo plannotator !TAG! installed to !INSTALL_PATH!
+echo specannotate !TAG! installed to !INSTALL_PATH!
 
 REM Check if install directory is in PATH
 echo !PATH! | findstr /i /c:"!INSTALL_DIR!" >nul
@@ -131,38 +131,38 @@ REM Install slash commands for Claude Code
 set "CLAUDE_COMMANDS_DIR=%USERPROFILE%\.claude\commands"
 if not exist "!CLAUDE_COMMANDS_DIR!" mkdir "!CLAUDE_COMMANDS_DIR!"
 
-REM Install /plannotator-review command
+REM Install /specannotate-review command
 (
 echo ---
 echo description: Open interactive code review for current changes
-echo allowed-tools: Bash^(plannotator:*^)
+echo allowed-tools: Bash^(specannotate:*^)
 echo ---
 echo.
 echo ## Code Review Feedback
 echo.
-echo !`plannotator review`
+echo !`specannotate review`
 echo.
 echo ## Your task
 echo.
-echo Address the code review feedback above. The user has reviewed your changes in the Plannotator UI and provided specific annotations and comments.
-) > "!CLAUDE_COMMANDS_DIR!\plannotator-review.md"
+echo Address the code review feedback above. The user has reviewed your changes in the Specannotate UI and provided specific annotations and comments.
+) > "!CLAUDE_COMMANDS_DIR!\specannotate-review.md"
 
-echo Installed /plannotator-review command to !CLAUDE_COMMANDS_DIR!\plannotator-review.md
+echo Installed /specannotate-review command to !CLAUDE_COMMANDS_DIR!\specannotate-review.md
 
 REM Install /speckit-review command
 (
 echo ---
 echo description: Review spec-kit specification documents for current feature branch
-echo allowed-tools: Bash^(plannotator:*^)
+echo allowed-tools: Bash^(specannotate:*^)
 echo ---
 echo.
 echo ## Spec Review Feedback
 echo.
-echo !`plannotator speckit`
+echo !`specannotate speckit`
 echo.
 echo ## Your task
 echo.
-echo Address the spec review feedback above. The user has reviewed your specification documents ^(spec.md, plan.md, tasks.md, etc.^) in the Plannotator UI and provided specific annotations and comments.
+echo Address the spec review feedback above. The user has reviewed your specification documents ^(spec.md, plan.md, tasks.md, etc.^) in the Specannotate UI and provided specific annotations and comments.
 echo.
 echo Focus on the areas they highlighted:
 echo - Specification details they want changed
@@ -175,12 +175,12 @@ echo Installed /speckit-review command to !CLAUDE_COMMANDS_DIR!\speckit-review.m
 
 echo.
 echo Test the install:
-echo   echo {"tool_input":{"plan":"# Test Plan\\n\\nHello world"}} ^| plannotator
+echo   echo {"tool_input":{"plan":"# Test Plan\\n\\nHello world"}} ^| specannotate
 echo.
 echo Then install the Claude Code plugin:
 echo   /plugin marketplace add nipunarora/specplannotate
-echo   /plugin install plannotator@plannotator
+echo   /plugin install specannotate@specannotate
 echo.
-echo The /plannotator-review command is ready to use!
+echo The /specannotate-review command is ready to use!
 echo.
 exit /b 0

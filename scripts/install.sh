@@ -17,13 +17,13 @@ case "$(uname -m)" in
 esac
 
 platform="${os}-${arch}"
-binary_name="plannotator-${platform}"
+binary_name="specannotate-${platform}"
 
 # Clean up old Windows install locations (for users running bash on Windows)
 if [ -n "$USERPROFILE" ]; then
     # Running on Windows (Git Bash, MSYS, etc.) - clean up old locations
-    rm -f "$USERPROFILE/.local/bin/plannotator" "$USERPROFILE/.local/bin/plannotator.exe" 2>/dev/null || true
-    rm -f "$LOCALAPPDATA/plannotator/plannotator.exe" 2>/dev/null || true
+    rm -f "$USERPROFILE/.local/bin/specannotate" "$USERPROFILE/.local/bin/specannotate.exe" 2>/dev/null || true
+    rm -f "$LOCALAPPDATA/specannotate/specannotate.exe" 2>/dev/null || true
     echo "Cleaned up old Windows install locations"
 fi
 
@@ -35,7 +35,7 @@ if [ -z "$latest_tag" ]; then
     exit 1
 fi
 
-echo "Installing plannotator ${latest_tag}..."
+echo "Installing specannotate ${latest_tag}..."
 
 binary_url="https://github.com/${REPO}/releases/download/${latest_tag}/${binary_name}"
 checksum_url="${binary_url}.sha256"
@@ -60,13 +60,13 @@ if [ "$actual_checksum" != "$expected_checksum" ]; then
 fi
 
 # Remove old binary first (handles Windows .exe and locked file issues)
-rm -f "$INSTALL_DIR/plannotator" "$INSTALL_DIR/plannotator.exe" 2>/dev/null || true
+rm -f "$INSTALL_DIR/specannotate" "$INSTALL_DIR/specannotate.exe" 2>/dev/null || true
 
-mv "$tmp_file" "$INSTALL_DIR/plannotator"
-chmod +x "$INSTALL_DIR/plannotator"
+mv "$tmp_file" "$INSTALL_DIR/specannotate"
+chmod +x "$INSTALL_DIR/specannotate"
 
 echo ""
-echo "plannotator ${latest_tag} installed to ${INSTALL_DIR}/plannotator"
+echo "specannotate ${latest_tag} installed to ${INSTALL_DIR}/specannotate"
 
 if ! echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
     echo ""
@@ -84,44 +84,44 @@ if ! echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
 fi
 
 # Clear any cached OpenCode plugin to force fresh download on next run
-rm -rf "$HOME/.cache/opencode/node_modules/@plannotator" "$HOME/.bun/install/cache/@plannotator" 2>/dev/null || true
+rm -rf "$HOME/.cache/opencode/node_modules/@specannotate" "$HOME/.bun/install/cache/@specannotate" 2>/dev/null || true
 
 # Install slash commands for Claude Code
 CLAUDE_COMMANDS_DIR="$HOME/.claude/commands"
 mkdir -p "$CLAUDE_COMMANDS_DIR"
 
-# Install /plannotator-review command
-cat > "$CLAUDE_COMMANDS_DIR/plannotator-review.md" << 'COMMAND_EOF'
+# Install /specannotate-review command
+cat > "$CLAUDE_COMMANDS_DIR/specannotate-review.md" << 'COMMAND_EOF'
 ---
 description: Open interactive code review for current changes
-allowed-tools: Bash(plannotator:*)
+allowed-tools: Bash(specannotate:*)
 ---
 
 ## Code Review Feedback
 
-!`plannotator review`
+!`specannotate review`
 
 ## Your task
 
-Address the code review feedback above. The user has reviewed your changes in the Plannotator UI and provided specific annotations and comments.
+Address the code review feedback above. The user has reviewed your changes in the Specannotate UI and provided specific annotations and comments.
 COMMAND_EOF
 
-echo "Installed /plannotator-review command to ${CLAUDE_COMMANDS_DIR}/plannotator-review.md"
+echo "Installed /specannotate-review command to ${CLAUDE_COMMANDS_DIR}/specannotate-review.md"
 
 # Install /speckit-review command
 cat > "$CLAUDE_COMMANDS_DIR/speckit-review.md" << 'COMMAND_EOF'
 ---
 description: Review spec-kit specification documents for current feature branch
-allowed-tools: Bash(plannotator:*)
+allowed-tools: Bash(specannotate:*)
 ---
 
 ## Spec Review Feedback
 
-!`plannotator speckit`
+!`specannotate speckit`
 
 ## Your task
 
-Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Plannotator UI and provided specific annotations and comments.
+Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Specannotate UI and provided specific annotations and comments.
 
 Focus on the areas they highlighted:
 - Specification details they want changed
@@ -136,16 +136,16 @@ echo "Installed /speckit-review command to ${CLAUDE_COMMANDS_DIR}/speckit-review
 OPENCODE_COMMANDS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/command"
 mkdir -p "$OPENCODE_COMMANDS_DIR"
 
-cat > "$OPENCODE_COMMANDS_DIR/plannotator-review.md" << 'COMMAND_EOF'
+cat > "$OPENCODE_COMMANDS_DIR/specannotate-review.md" << 'COMMAND_EOF'
 ---
 description: Open interactive code review for current changes
 ---
 
-The Plannotator Code Review has been triggered. Opening the review UI...
+The Specannotate Code Review has been triggered. Opening the review UI...
 Acknowledge "Opening code review..." and wait for the user's feedback.
 COMMAND_EOF
 
-echo "Installed /plannotator-review command to ${OPENCODE_COMMANDS_DIR}/plannotator-review.md"
+echo "Installed /specannotate-review command to ${OPENCODE_COMMANDS_DIR}/specannotate-review.md"
 
 echo ""
 echo "=========================================="
@@ -154,9 +154,9 @@ echo "=========================================="
 echo ""
 echo "Add the plugin to your opencode.json:"
 echo ""
-echo '  "plugin": ["@plannotator/opencode@latest"]'
+echo '  "plugin": ["@specannotate/opencode@latest"]'
 echo ""
-echo "Then restart OpenCode. The /plannotator-review command is ready!"
+echo "Then restart OpenCode. The /specannotate-review command is ready!"
 echo ""
 echo "=========================================="
 echo "  CLAUDE CODE USERS: YOU'RE ALL SET!"
@@ -164,6 +164,6 @@ echo "=========================================="
 echo ""
 echo "Install the Claude Code plugin:"
 echo "  /plugin marketplace add nipunarora/specplannotate"
-echo "  /plugin install plannotator@plannotator"
+echo "  /plugin install specannotate@specannotate"
 echo ""
-echo "The /plannotator-review command is ready to use after you restart Claude Code!"
+echo "The /specannotate-review command is ready to use after you restart Claude Code!"

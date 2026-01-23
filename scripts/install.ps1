@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 
 $repo = "nipunarora/specplannotate"
-$installDir = "$env:LOCALAPPDATA\plannotator"
+$installDir = "$env:LOCALAPPDATA\specannotate"
 
 # Detect architecture
 $arch = if ([Environment]::Is64BitOperatingSystem) {
@@ -13,12 +13,12 @@ $arch = if ([Environment]::Is64BitOperatingSystem) {
 }
 
 $platform = "win32-$arch"
-$binaryName = "plannotator-$platform.exe"
+$binaryName = "specannotate-$platform.exe"
 
 # Clean up old install locations that may take precedence in PATH
 $oldLocations = @(
-    "$env:USERPROFILE\.local\bin\plannotator.exe",
-    "$env:USERPROFILE\.local\bin\plannotator"
+    "$env:USERPROFILE\.local\bin\specannotate.exe",
+    "$env:USERPROFILE\.local\bin\specannotate"
 )
 
 foreach ($oldPath in $oldLocations) {
@@ -37,7 +37,7 @@ if (-not $latestTag) {
     exit 1
 }
 
-Write-Host "Installing plannotator $latestTag..."
+Write-Host "Installing specannotate $latestTag..."
 
 $binaryUrl = "https://github.com/$repo/releases/download/$latestTag/$binaryName"
 $checksumUrl = "$binaryUrl.sha256"
@@ -68,10 +68,10 @@ if ($actualChecksum -ne $expectedChecksum) {
     exit 1
 }
 
-Move-Item -Force $tmpFile "$installDir\plannotator.exe"
+Move-Item -Force $tmpFile "$installDir\specannotate.exe"
 
 Write-Host ""
-Write-Host "plannotator $latestTag installed to $installDir\plannotator.exe"
+Write-Host "specannotate $latestTag installed to $installDir\specannotate.exe"
 
 # Add to PATH if not already there
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -83,45 +83,45 @@ if ($userPath -notlike "*$installDir*") {
 }
 
 # Clear OpenCode plugin cache
-Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\opencode\node_modules\@plannotator" -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force "$env:USERPROFILE\.bun\install\cache\@plannotator" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\opencode\node_modules\@specannotate" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$env:USERPROFILE\.bun\install\cache\@specannotate" -ErrorAction SilentlyContinue
 
 # Install Claude Code slash commands
 $claudeCommandsDir = "$env:USERPROFILE\.claude\commands"
 New-Item -ItemType Directory -Force -Path $claudeCommandsDir | Out-Null
 
-# Install /plannotator-review command
+# Install /specannotate-review command
 @"
 ---
 description: Open interactive code review for current changes
-allowed-tools: Bash(plannotator:*)
+allowed-tools: Bash(specannotate:*)
 ---
 
 ## Code Review Feedback
 
-!`plannotator review`
+!`specannotate review`
 
 ## Your task
 
-Address the code review feedback above. The user has reviewed your changes in the Plannotator UI and provided specific annotations and comments.
-"@ | Set-Content -Path "$claudeCommandsDir\plannotator-review.md"
+Address the code review feedback above. The user has reviewed your changes in the Specannotate UI and provided specific annotations and comments.
+"@ | Set-Content -Path "$claudeCommandsDir\specannotate-review.md"
 
-Write-Host "Installed /plannotator-review command to $claudeCommandsDir\plannotator-review.md"
+Write-Host "Installed /specannotate-review command to $claudeCommandsDir\specannotate-review.md"
 
 # Install /speckit-review command
 @"
 ---
 description: Review spec-kit specification documents for current feature branch
-allowed-tools: Bash(plannotator:*)
+allowed-tools: Bash(specannotate:*)
 ---
 
 ## Spec Review Feedback
 
-!`plannotator speckit`
+!`specannotate speckit`
 
 ## Your task
 
-Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Plannotator UI and provided specific annotations and comments.
+Address the spec review feedback above. The user has reviewed your specification documents (spec.md, plan.md, tasks.md, etc.) in the Specannotate UI and provided specific annotations and comments.
 
 Focus on the areas they highlighted:
 - Specification details they want changed
@@ -141,11 +141,11 @@ New-Item -ItemType Directory -Force -Path $opencodeCommandsDir | Out-Null
 description: Open interactive code review for current changes
 ---
 
-The Plannotator Code Review has been triggered. Opening the review UI...
+The Specannotate Code Review has been triggered. Opening the review UI...
 Acknowledge "Opening code review..." and wait for the user's feedback.
-"@ | Set-Content -Path "$opencodeCommandsDir\plannotator-review.md"
+"@ | Set-Content -Path "$opencodeCommandsDir\specannotate-review.md"
 
-Write-Host "Installed /plannotator-review command to $opencodeCommandsDir\plannotator-review.md"
+Write-Host "Installed /specannotate-review command to $opencodeCommandsDir\specannotate-review.md"
 
 Write-Host ""
 Write-Host "=========================================="
@@ -154,9 +154,9 @@ Write-Host "=========================================="
 Write-Host ""
 Write-Host "Add the plugin to your opencode.json:"
 Write-Host ""
-Write-Host '  "plugin": ["@plannotator/opencode@latest"]'
+Write-Host '  "plugin": ["@specannotate/opencode@latest"]'
 Write-Host ""
-Write-Host "Then restart OpenCode. The /plannotator-review command is ready!"
+Write-Host "Then restart OpenCode. The /specannotate-review command is ready!"
 Write-Host ""
 Write-Host "=========================================="
 Write-Host "  CLAUDE CODE USERS: YOU ARE ALL SET!"
@@ -164,6 +164,6 @@ Write-Host "=========================================="
 Write-Host ""
 Write-Host "Install the Claude Code plugin:"
 Write-Host "  /plugin marketplace add nipunarora/specplannotate"
-Write-Host "  /plugin install plannotator@plannotator"
+Write-Host "  /plugin install specannotate@specannotate"
 Write-Host ""
-Write-Host "The /plannotator-review command is ready to use after you restart Claude Code!"
+Write-Host "The /specannotate-review command is ready to use after you restart Claude Code!"
