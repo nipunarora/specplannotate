@@ -2,16 +2,16 @@
   "name": "@plannotator/opencode",
   "version": "0.6.7",
   "description": "Plannotator plugin for OpenCode - interactive plan review with visual annotation",
-  "author": "backnotprop",
+  "author": "nipunarora",
   "license": "BSL-1.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/backnotprop/plannotator.git",
+    "url": "git+https://github.com/nipunarora/specplannotate.git",
     "directory": "apps/opencode-plugin"
   },
-  "homepage": "https://github.com/backnotprop/plannotator",
+  "homepage": "https://github.com/nipunarora/specplannotate",
   "bugs": {
-    "url": "https://github.com/backnotprop/plannotator/issues"
+    "url": "https://github.com/nipunarora/specplannotate/issues"
   },
   "keywords": [
     "opencode",

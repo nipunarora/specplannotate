@@ -496,7 +496,7 @@ const ReviewApp: React.FC = () => {
         <header className="h-12 flex items-center justify-between px-2 md:px-4 border-b border-border/50 bg-card/50 backdrop-blur-xl z-50">
           <div className="flex items-center gap-2 md:gap-3">
             <a
-              href="https://github.com/backnotprop/plannotator"
+              href="https://github.com/nipunarora/specplannotate"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 md:gap-2 hover:opacity-80 transition-opacity"
@@ -504,7 +504,7 @@ const ReviewApp: React.FC = () => {
               <span className="text-sm font-semibold tracking-tight">Plannotator</span>
             </a>
             <a
-              href="https://github.com/backnotprop/plannotator/releases"
+              href="https://github.com/nipunarora/specplannotate/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground font-mono opacity-60 hidden md:inline hover:opacity-100 transition-opacity"

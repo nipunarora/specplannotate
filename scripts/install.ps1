@@ -1,7 +1,7 @@
 # Plannotator Windows Installer
 $ErrorActionPreference = "Stop"
 
-$repo = "backnotprop/plannotator"
+$repo = "nipunarora/specplannotate"
 $installDir = "$env:LOCALAPPDATA\plannotator"
 
 # Detect architecture
@@ -163,7 +163,7 @@ Write-Host "  CLAUDE CODE USERS: YOU ARE ALL SET!"
 Write-Host "=========================================="
 Write-Host ""
 Write-Host "Install the Claude Code plugin:"
-Write-Host "  /plugin marketplace add backnotprop/plannotator"
+Write-Host "  /plugin marketplace add nipunarora/specplannotate"
 Write-Host "  /plugin install plannotator@plannotator"
 Write-Host ""
 Write-Host "The /plannotator-review command is ready to use after you restart Claude Code!"

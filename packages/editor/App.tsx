@@ -705,7 +705,7 @@ const App: React.FC = () => {
               <span className="text-sm font-semibold tracking-tight">Plannotator</span>
             </a>
             <a
-              href="https://github.com/backnotprop/plannotator/releases"
+              href="https://github.com/nipunarora/specplannotate/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground font-mono opacity-60 hidden md:inline hover:opacity-100 transition-opacity"

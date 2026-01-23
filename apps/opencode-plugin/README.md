@@ -32,7 +32,7 @@ Restart OpenCode. The `submit_plan` tool is now available.
 
 > **Slash commands:** Run the install script to get `/plannotator-review`:
 > ```bash
-> curl -fsSL https://plannotator.ai/install.sh | bash
+> curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.sh | bash
 > ```
 > This also clears any cached plugin versions.
 
@@ -94,9 +94,9 @@ Save approved plans directly to your Obsidian vault.
 ## Links
 
 - [Website](https://plannotator.ai)
-- [GitHub](https://github.com/backnotprop/plannotator)
-- [Claude Code Plugin](https://github.com/backnotprop/plannotator/tree/main/apps/hook)
+- [GitHub](https://github.com/nipunarora/specplannotate)
+- [Claude Code Plugin](https://github.com/nipunarora/specplannotate/tree/main/apps/hook)
 
 ## License
 
-Copyright (c) 2025 backnotprop. Licensed under [BSL-1.1](https://github.com/backnotprop/plannotator/blob/main/LICENSE).
+Copyright (c) 2025 nipunarora. Licensed under [BSL-1.1](https://github.com/nipunarora/specplannotate/blob/main/LICENSE).

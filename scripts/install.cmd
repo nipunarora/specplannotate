@@ -7,7 +7,7 @@ REM Parse command line argument
 set "VERSION=%~1"
 if "!VERSION!"=="" set "VERSION=latest"
 
-set "REPO=backnotprop/plannotator"
+set "REPO=nipunarora/specplannotate"
 set "INSTALL_DIR=%USERPROFILE%\.local\bin"
 set "PLATFORM=win32-x64"
 
@@ -178,7 +178,7 @@ echo Test the install:
 echo   echo {"tool_input":{"plan":"# Test Plan\\n\\nHello world"}} ^| plannotator
 echo.
 echo Then install the Claude Code plugin:
-echo   /plugin marketplace add backnotprop/plannotator
+echo   /plugin marketplace add nipunarora/specplannotate
 echo   /plugin install plannotator@plannotator
 echo.
 echo The /plannotator-review command is ready to use!

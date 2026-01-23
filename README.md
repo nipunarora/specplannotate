@@ -40,19 +40,19 @@ Interactive Plan Review for AI Coding Agents. Mark up and refine your plans usin
 **macOS / Linux / WSL:**
 
 ```bash
-curl -fsSL https://plannotator.ai/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.sh | bash
 ```
 
 **Windows PowerShell:**
 
 ```powershell
-irm https://plannotator.ai/install.ps1 | iex
+irm https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.ps1 | iex
 ```
 
 **Then in Claude Code:**
 
 ```
-/plugin marketplace add backnotprop/plannotator
+/plugin marketplace add nipunarora/specplannotate
 /plugin install plannotator@plannotator
 
 # IMPORTANT: Restart Claude Code after plugin install
@@ -71,7 +71,7 @@ See [apps/hook/README.md](apps/hook/README.md) for detailed installation instruc
 **Clone and build:**
 
 ```bash
-git clone https://github.com/backnotprop/plannotator.git
+git clone https://github.com/nipunarora/specplannotate.git
 cd plannotator
 bun install
 bun run build:hook
@@ -172,12 +172,12 @@ Add to your `opencode.json`:
 **Run the install script** to get `/plannotator-review`:
 
 ```bash
-curl -fsSL https://plannotator.ai/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.sh | bash
 ```
 
 **Windows:**
 ```powershell
-irm https://plannotator.ai/install.ps1 | iex
+irm https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.ps1 | iex
 ```
 
 This also clears any cached plugin versions. Then restart OpenCode.
@@ -225,6 +225,6 @@ The command auto-detects your current git branch and loads specs from `specs/[br
 
 ## License
 
-**Copyright (c) 2025 backnotprop.**
+**Copyright (c) 2025 nipunarora.**
 
 This project is licensed under the **Business Source License 1.1 (BSL)**.

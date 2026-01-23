@@ -53,7 +53,7 @@ plannotator/
 **Via plugin marketplace** (when repo is public):
 
 ```
-/plugin marketplace add backnotprop/plannotator
+/plugin marketplace add nipunarora/specplannotate
 ```
 
 **Local installation:**
@@ -64,7 +64,7 @@ curl -fsSL https://bun.sh/install | bash
 # or: npm install -g bun
 
 # 2. Clone and build
-git clone https://github.com/backnotprop/plannotator.git
+git clone https://github.com/nipunarora/specplannotate.git
 cd plannotator
 bun install
 bun run build:review && bun run build:hook

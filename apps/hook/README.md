@@ -8,17 +8,17 @@ Install the `plannotator` command so Claude Code can use it:
 
 **macOS / Linux / WSL:**
 ```bash
-curl -fsSL https://plannotator.ai/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.sh | bash
 ```
 
 **Windows PowerShell:**
 ```powershell
-irm https://plannotator.ai/install.ps1 | iex
+irm https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.ps1 | iex
 ```
 
 **Windows CMD:**
 ```cmd
-curl -fsSL https://plannotator.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+curl -fsSL https://raw.githubusercontent.com/nipunarora/specplannotate/main/scripts/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
 ---
@@ -32,7 +32,7 @@ curl -fsSL https://plannotator.ai/install.cmd -o install.cmd && install.cmd && d
 In Claude Code:
 
 ```
-/plugin marketplace add backnotprop/plannotator
+/plugin marketplace add nipunarora/specplannotate
 /plugin install plannotator@plannotator
 ```
 
