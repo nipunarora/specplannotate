@@ -6,6 +6,12 @@
   <img src="apps/marketing/public/og-image.webp" alt="Specannotate" width="80%" />
 </p>
 
+#What it gives you? 
+
+<img width="833" height="597" alt="image" src="https://github.com/user-attachments/assets/fab30a5c-25eb-4b6c-8b34-4299c43c1649" />
+
+A Mechanism to "review", "annotate", and potentially collaborate and share feedback back to the agent. 
+
 Interactive Plan Review for AI Coding Agents. Mark up and refine your plans using a visual UI, share for team collaboration, and seamlessly integrate with **Claude Code** and **OpenCode**.
 
 <table>
