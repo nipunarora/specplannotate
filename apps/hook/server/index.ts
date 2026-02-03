@@ -136,6 +136,13 @@ if (args[0] === "review") {
 
   // Output result
   if (result.approved) {
+    // Output feedback first (if any annotations/feedback provided)
+    if (result.feedback) {
+      console.log(result.feedback);
+      console.log(""); // Blank line separator
+    }
+
+    // Then output file modification summary
     if (result.modifiedFiles && result.modifiedFiles.length > 0) {
       console.log(`Spec approved. Modified files:\n${result.modifiedFiles.map(f => `  - ${f}`).join("\n")}`);
     } else {
