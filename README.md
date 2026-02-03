@@ -10,7 +10,12 @@
 
 <img width="833" height="597" alt="image" src="https://github.com/user-attachments/assets/fab30a5c-25eb-4b6c-8b34-4299c43c1649" />
 
-A Mechanism to "review", "annotate", and potentially collaborate and share feedback back to the agent. 
+A Mechanism to "review", "annotate", and potentially collaborate and share feedback back to the agent.
+You can review give feedback to the agent, redline and cross out or give global comments across the entire spec generated. 
+This is a clarification and brainstorming interactive tool, where you are acting as a local PR reviewer to the spec generated back to the agent. 
+
+The commenting ability for on different lines, helps make the document better and to iterate over it. 
+
 
 Interactive Plan Review for AI Coding Agents. Mark up and refine your plans using a visual UI, share for team collaboration, and seamlessly integrate with **Claude Code** and **OpenCode**.
 
