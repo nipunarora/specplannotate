@@ -88,7 +88,7 @@ if (args[0] === "review") {
   server.stop();
 
   // Output feedback (captured by slash command)
-  console.log(result.feedback || "No feedback provided.");
+  await Bun.write(Bun.stdout, (result.feedback || "No feedback provided.") + "\n");
   process.exit(0);
 
 } else if (args[0] === "speckit") {
@@ -138,21 +138,20 @@ if (args[0] === "review") {
   if (result.approved) {
     // Output feedback first (if any annotations/feedback provided)
     if (result.feedback) {
-      console.log(result.feedback);
-      console.log(""); // Blank line separator
+      await Bun.write(Bun.stdout, result.feedback + "\n\n");
     }
 
     // Then output file modification summary
     if (result.modifiedFiles && result.modifiedFiles.length > 0) {
-      console.log(`Spec approved. Modified files:\n${result.modifiedFiles.map(f => `  - ${f}`).join("\n")}`);
+      await Bun.write(Bun.stdout, `Spec approved. Modified files:\n${result.modifiedFiles.map(f => `  - ${f}`).join("\n")}\n`);
     } else {
-      console.log("Spec approved (no file modifications).");
+      await Bun.write(Bun.stdout, "Spec approved (no file modifications).\n");
     }
     if (result.errors && result.errors.length > 0) {
-      console.error(`Warnings:\n${result.errors.join("\n")}`);
+      await Bun.write(Bun.stderr, `Warnings:\n${result.errors.join("\n")}\n`);
     }
   } else {
-    console.log(result.feedback || "Spec review denied by user.");
+    await Bun.write(Bun.stdout, (result.feedback || "Spec review denied by user.") + "\n");
   }
   process.exit(0);
 
