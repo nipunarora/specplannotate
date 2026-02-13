@@ -5,7 +5,7 @@ import { AnnotationPanel } from '@plannotator/ui/components/AnnotationPanel';
 import { ExportModal } from '@plannotator/ui/components/ExportModal';
 import { ImportModal } from '@plannotator/ui/components/ImportModal';
 import { ConfirmDialog } from '@plannotator/ui/components/ConfirmDialog';
-import { Annotation, Block, EditorMode } from '@plannotator/ui/types';
+import { Annotation, Block, EditorMode, type ImageAttachment } from '@plannotator/ui/types';
 import { ThemeProvider } from '@plannotator/ui/components/ThemeProvider';
 import { ModeToggle } from '@plannotator/ui/components/ModeToggle';
 import { ModeSwitcher } from '@plannotator/ui/components/ModeSwitcher';
@@ -35,6 +35,7 @@ import {
 import { PermissionModeSetup } from '@plannotator/ui/components/PermissionModeSetup';
 import { UIFeaturesSetup } from '@plannotator/ui/components/UIFeaturesSetup';
 import { ImageAnnotator } from '@plannotator/ui/components/ImageAnnotator';
+import { deriveImageName } from '@plannotator/ui/components/AttachmentsButton';
 
 const PLAN_CONTENT = `# Implementation Plan: Real-time Collaboration
 
@@ -350,11 +351,12 @@ const App: React.FC = () => {
   const [uiPrefs, setUiPrefs] = useState(() => getUIPreferences());
   const [isApiMode, setIsApiMode] = useState(false);
   const [origin, setOrigin] = useState<'claude-code' | 'opencode' | null>(null);
-  const [globalAttachments, setGlobalAttachments] = useState<string[]>([]);
+  const [globalAttachments, setGlobalAttachments] = useState<ImageAttachment[]>([]);
+  const [annotateMode, setAnnotateMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<'approved' | 'denied' | null>(null);
-  const [pendingPasteImage, setPendingPasteImage] = useState<{ file: File; blobUrl: string } | null>(null);
+  const [pendingPasteImage, setPendingPasteImage] = useState<{ file: File; blobUrl: string; initialName: string } | null>(null);
   const [showPermissionModeSetup, setShowPermissionModeSetup] = useState(false);
   const [showUIFeaturesSetup, setShowUIFeaturesSetup] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>('bypassPermissions');
@@ -441,9 +443,12 @@ const App: React.FC = () => {
         if (!res.ok) throw new Error('Not in API mode');
         return res.json();
       })
-      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean; shareBaseUrl?: string; repoInfo?: { display: string; branch?: string } }) => {
+      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; mode?: 'annotate'; sharingEnabled?: boolean; shareBaseUrl?: string; repoInfo?: { display: string; branch?: string } }) => {
         setMarkdown(data.plan);
         setIsApiMode(true);
+        if (data.mode === 'annotate') {
+          setAnnotateMode(true);
+        }
         if (data.sharingEnabled !== undefined) {
           setSharingEnabled(data.sharingEnabled);
         }
@@ -489,9 +494,10 @@ const App: React.FC = () => {
           e.preventDefault();
           const file = item.getAsFile();
           if (file) {
-            // Show annotator instead of direct upload
+            // Derive name before showing annotator so user sees it immediately
+            const initialName = deriveImageName(file.name, globalAttachments.map(g => g.name));
             const blobUrl = URL.createObjectURL(file);
-            setPendingPasteImage({ file, blobUrl });
+            setPendingPasteImage({ file, blobUrl, initialName });
           }
           break;
         }
@@ -500,10 +506,10 @@ const App: React.FC = () => {
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
-  }, []);
+  }, [globalAttachments]);
 
-  // Handle paste annotator accept
-  const handlePasteAnnotatorAccept = async (blob: Blob, hasDrawings: boolean) => {
+  // Handle paste annotator accept — name comes from ImageAnnotator
+  const handlePasteAnnotatorAccept = async (blob: Blob, hasDrawings: boolean, name: string) => {
     if (!pendingPasteImage) return;
 
     try {
@@ -515,8 +521,8 @@ const App: React.FC = () => {
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       if (res.ok) {
-        const { path } = await res.json();
-        setGlobalAttachments(prev => [...prev, path]);
+        const data = await res.json();
+        setGlobalAttachments(prev => [...prev, { path: data.path, name }]);
       }
     } catch {
       // Upload failed silently
@@ -618,6 +624,27 @@ const App: React.FC = () => {
     }
   };
 
+  // Annotate mode handler — sends feedback via /api/feedback
+  const handleAnnotateFeedback = async () => {
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feedback: diffOutput,
+          annotations,
+        }),
+      });
+      if (getAutoClose()) {
+        window.close();
+      }
+      setSubmitted('denied'); // reuse 'denied' state for "feedback sent" overlay
+    } catch {
+      setIsSubmitting(false);
+    }
+  };
+
   // Global keyboard shortcuts (Cmd/Ctrl+Enter to submit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -639,6 +666,16 @@ const App: React.FC = () => {
       if (!isApiMode) return;
 
       e.preventDefault();
+
+      // Annotate mode: always send feedback
+      if (annotateMode) {
+        if (annotations.length === 0) {
+          setShowFeedbackPrompt(true);
+        } else {
+          handleAnnotateFeedback();
+        }
+        return;
+      }
 
       // No annotations → Approve, otherwise → Send Feedback
       if (annotations.length === 0) {
@@ -662,7 +699,7 @@ const App: React.FC = () => {
   }, [
     showExport, showImport, showFeedbackPrompt, showClaudeCodeWarning, showAgentWarning,
     showPermissionModeSetup, showUIFeaturesSetup, pendingPasteImage,
-    submitted, isSubmitting, isApiMode, annotations.length,
+    submitted, isSubmitting, isApiMode, annotations.length, annotateMode,
     origin, getAgentWarning,
   ]);
 
@@ -690,13 +727,14 @@ const App: React.FC = () => {
     ));
   };
 
-  const handleAddGlobalAttachment = (path: string) => {
-    setGlobalAttachments(prev => [...prev, path]);
+  const handleAddGlobalAttachment = (image: ImageAttachment) => {
+    setGlobalAttachments(prev => [...prev, image]);
   };
 
   const handleRemoveGlobalAttachment = (path: string) => {
-    setGlobalAttachments(prev => prev.filter(p => p !== path));
+    setGlobalAttachments(prev => prev.filter(p => p.path !== path));
   };
+
 
   const handleTocNavigate = (blockId: string) => {
     // Navigation handled by TableOfContents component
@@ -853,6 +891,8 @@ const App: React.FC = () => {
                   onClick={() => {
                     if (annotations.length === 0) {
                       setShowFeedbackPrompt(true);
+                    } else if (annotateMode) {
+                      handleAnnotateFeedback();
                     } else {
                       handleDeny();
                     }
@@ -868,10 +908,10 @@ const App: React.FC = () => {
                   <svg className="w-4 h-4 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  <span className="hidden md:inline">{isSubmitting ? 'Sending...' : 'Send Feedback'}</span>
+                  <span className="hidden md:inline">{isSubmitting ? 'Sending...' : annotateMode ? 'Send Annotations' : 'Send Feedback'}</span>
                 </button>
 
-                <div className="relative group/approve">
+                {!annotateMode && <div className="relative group/approve">
                   <button
                     onClick={() => {
                       // Show warning for Claude Code users with annotations
@@ -911,7 +951,7 @@ const App: React.FC = () => {
                       {agentName} doesn't support feedback on approval. Your annotations won't be seen.
                     </div>
                   )}
-                </div>
+                </div>}
 
                 <div className="w-px h-5 bg-border/50 mx-1 hidden md:block" />
               </>
@@ -1211,12 +1251,14 @@ const App: React.FC = () => {
 
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold text-foreground">
-                  {submitted === 'approved' ? 'Plan Approved' : 'Feedback Sent'}
+                  {submitted === 'approved' ? 'Plan Approved' : annotateMode ? 'Annotations Sent' : 'Feedback Sent'}
                 </h2>
                 <p className="text-muted-foreground">
                   {submitted === 'approved'
                     ? `${agentName} will proceed with the implementation.`
-                    : `${agentName} will revise the plan based on your annotations.`}
+                    : annotateMode
+                      ? `${agentName} will address your annotations on the file.`
+                      : `${agentName} will revise the plan based on your annotations.`}
                 </p>
               </div>
 
@@ -1239,6 +1281,7 @@ const App: React.FC = () => {
         <ImageAnnotator
           isOpen={!!pendingPasteImage}
           imageSrc={pendingPasteImage?.blobUrl ?? ''}
+          initialName={pendingPasteImage?.initialName}
           onAccept={handlePasteAnnotatorAccept}
           onClose={handlePasteAnnotatorClose}
         />

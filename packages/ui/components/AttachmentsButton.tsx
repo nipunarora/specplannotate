@@ -2,16 +2,53 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ImageThumbnail, getImageSrc } from './ImageThumbnail';
 import { ImageAnnotator } from './ImageAnnotator';
+import type { ImageAttachment } from '../types';
+
+/**
+ * Derive a clean, human-readable name from an original filename.
+ * "Login Mockup.png" → "login-mockup"
+ * "annotated.png" or generic names → "image-N"
+ */
+export function deriveImageName(originalName: string, existingNames: string[]): string {
+  const base = originalName.replace(/\.[^.]+$/, '');
+  const generic = ['annotated', 'image', 'screenshot', 'paste', 'clipboard', 'untitled'];
+
+  if (generic.includes(base.toLowerCase())) {
+    let n = 1;
+    while (existingNames.includes(`image-${n}`)) n++;
+    return `image-${n}`;
+  }
+
+  let name = base.toLowerCase()
+    .replace(/[_\s]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  if (!name) {
+    let n = 1;
+    while (existingNames.includes(`image-${n}`)) n++;
+    return `image-${n}`;
+  }
+
+  if (existingNames.includes(name)) {
+    let n = 2;
+    while (existingNames.includes(`${name}-${n}`)) n++;
+    name = `${name}-${n}`;
+  }
+
+  return name;
+}
 
 interface AttachmentsButtonProps {
-  paths: string[];
-  onAdd: (path: string) => void;
+  images: ImageAttachment[];
+  onAdd: (image: ImageAttachment) => void;
   onRemove: (path: string) => void;
   variant?: 'toolbar' | 'inline';
 }
 
 export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
-  paths,
+  images,
   onAdd,
   onRemove,
   variant = 'toolbar',
@@ -25,8 +62,8 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   // Annotator state
-  const [annotatorImage, setAnnotatorImage] = useState<{ file: File; blobUrl: string } | null>(null);
-  const [editingPath, setEditingPath] = useState<string | null>(null);
+  const [annotatorImage, setAnnotatorImage] = useState<{ file: File; blobUrl: string; initialName: string } | null>(null);
+  const [editingImage, setEditingImage] = useState<{ path: string; name: string } | null>(null);
 
   // Update popover position when opened
   useEffect(() => {
@@ -51,13 +88,14 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
   }, [isOpen]);
 
   const handleFileSelect = (file: File) => {
-    // Show annotator instead of uploading directly
+    // Derive name before opening annotator so user sees it immediately
+    const initialName = deriveImageName(file.name, images.map(i => i.name));
     const blobUrl = URL.createObjectURL(file);
-    setAnnotatorImage({ file, blobUrl });
+    setAnnotatorImage({ file, blobUrl, initialName });
     setIsOpen(false); // Close popover when annotator opens
   };
 
-  const handleAnnotatorAccept = async (blob: Blob, hasDrawings: boolean) => {
+  const handleAnnotatorAccept = async (blob: Blob, hasDrawings: boolean, name: string) => {
     setUploading(true);
     try {
       const formData = new FormData();
@@ -67,7 +105,7 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
           ? new File([blob], 'annotated.png', { type: 'image/png' })
           : annotatorImage.file;
         formData.append('file', fileToUpload);
-      } else if (editingPath) {
+      } else if (editingImage) {
         // Re-editing: always upload the new blob
         formData.append('file', new File([blob], 'annotated.png', { type: 'image/png' }));
       }
@@ -76,10 +114,11 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
       const data = await res.json();
       if (data.path) {
         // If re-editing, remove old path first
-        if (editingPath) {
-          onRemove(editingPath);
+        if (editingImage) {
+          onRemove(editingImage.path);
         }
-        onAdd(data.path);
+        // Use the name from the annotator (user may have edited it)
+        onAdd({ path: data.path, name });
       }
     } catch (err) {
       console.error('Upload failed:', err);
@@ -90,7 +129,7 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
         URL.revokeObjectURL(annotatorImage.blobUrl);
         setAnnotatorImage(null);
       }
-      setEditingPath(null);
+      setEditingImage(null);
     }
   };
 
@@ -99,7 +138,7 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
       URL.revokeObjectURL(annotatorImage.blobUrl);
       setAnnotatorImage(null);
     }
-    setEditingPath(null);
+    setEditingImage(null);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,15 +161,24 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
   const handleManualAdd = () => {
     const trimmed = manualPath.trim();
     if (trimmed) {
-      onAdd(trimmed);
+      const name = deriveImageName(
+        trimmed.split('/').pop() || 'image',
+        images.map(i => i.name)
+      );
+      onAdd({ path: trimmed, name });
       setManualPath('');
     }
   };
 
   const handleClearAll = (e: React.MouseEvent) => {
     e.stopPropagation();
-    paths.forEach(p => onRemove(p));
+    images.forEach(img => onRemove(img.path));
   };
+
+  // Determine annotator props
+  const annotatorOpen = !!annotatorImage || !!editingImage;
+  const annotatorSrc = annotatorImage?.blobUrl ?? (editingImage ? getImageSrc(editingImage.path) : '');
+  const annotatorInitialName = annotatorImage?.initialName ?? editingImage?.name ?? '';
 
   return (
     <>
@@ -142,29 +190,29 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
         className="group relative flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
       >
         {/* Show stacked thumbnails if we have images */}
-        {paths.length > 0 ? (
+        {images.length > 0 ? (
           <>
             <div className="relative flex items-center">
-              {paths.slice(0, 3).map((path, idx) => (
+              {images.slice(0, 3).map((img, idx) => (
                 <div
-                  key={path}
+                  key={img.path}
                   className="relative w-5 h-5 rounded border border-background"
                   style={{ marginLeft: idx > 0 ? '-6px' : 0, zIndex: 3 - idx }}
                 >
                   <img
-                    src={getImageSrc(path)}
-                    alt={`Attachment ${idx + 1}`}
+                    src={getImageSrc(img.path)}
+                    alt={img.name}
                     loading="lazy"
                     className="w-5 h-5 rounded object-cover"
                   />
                 </div>
               ))}
-              {paths.length > 3 && (
+              {images.length > 3 && (
                 <div
                   className="relative w-5 h-5 rounded bg-muted border border-background flex items-center justify-center text-[9px] font-medium"
                   style={{ marginLeft: '-6px', zIndex: 0 }}
                 >
-                  +{paths.length - 3}
+                  +{images.length - 3}
                 </div>
               )}
             </div>
@@ -184,7 +232,7 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
           </svg>
         )}
         <span className={variant === 'inline' ? 'sr-only' : ''}>
-          {paths.length > 0 ? `${paths.length}` : 'Images'}
+          {images.length > 0 ? `${images.length}` : 'Images'}
         </span>
       </button>
 
@@ -207,9 +255,9 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium">Attachments</div>
-                {paths.length > 0 && (
+                {images.length > 0 && (
                   <span className="text-[10px] text-muted-foreground">
-                    {paths.length} image{paths.length !== 1 ? 's' : ''}
+                    {images.length} image{images.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
@@ -277,22 +325,29 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
               </div>
 
               {/* Grid of current attachments */}
-              {paths.length > 0 && (
+              {images.length > 0 && (
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground">Current</div>
                   <div className="grid grid-cols-4 gap-2">
-                    {paths.map((path) => (
-                      <ImageThumbnail
-                        key={path}
-                        path={path}
-                        size="md"
-                        onClick={() => {
-                          setEditingPath(path);
-                          setIsOpen(false);
-                        }}
-                        onRemove={() => onRemove(path)}
-                        showRemove
-                      />
+                    {images.map((img) => (
+                      <div key={img.path} className="text-center">
+                        <ImageThumbnail
+                          path={img.path}
+                          size="md"
+                          onClick={() => {
+                            setEditingImage({ path: img.path, name: img.name });
+                            setIsOpen(false);
+                          }}
+                          onRemove={() => onRemove(img.path)}
+                          showRemove
+                        />
+                        <div
+                          className="text-[9px] text-muted-foreground truncate max-w-[3.5rem] mt-0.5 mx-auto"
+                          title={img.name}
+                        >
+                          {img.name}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -304,10 +359,11 @@ export const AttachmentsButton: React.FC<AttachmentsButtonProps> = ({
       )}
 
       {/* Image Annotator Dialog - portaled to body for correct positioning */}
-      {(!!annotatorImage || !!editingPath) && createPortal(
+      {annotatorOpen && createPortal(
         <ImageAnnotator
-          isOpen={!!annotatorImage || !!editingPath}
-          imageSrc={annotatorImage?.blobUrl ?? (editingPath ? getImageSrc(editingPath) : '')}
+          isOpen={annotatorOpen}
+          imageSrc={annotatorSrc}
+          initialName={annotatorInitialName}
           onAccept={handleAnnotatorAccept}
           onClose={handleAnnotatorClose}
         />,
